@@ -1,12 +1,11 @@
 /* ═══════════════════════════════════════════════════════════
    XYLO STUDIO — KEYBOARD SHORTCUTS
    
-   Global shortcuts that work across the whole app. Editor-level
-   shortcuts (comment toggle, tab indent) live in editor.js
-   because CodeMirror manages them.
+   Desktop shortcuts. Mobile uses on-screen buttons.
    
-   Shortcuts only fire on desktop. On mobile, the on-screen
-   buttons handle everything.
+   NOTE ON RESERVED KEYS:
+   Ctrl+N and Ctrl+O are browser-reserved (new window / open
+   file) and CANNOT be captured. We use Alt+N and Alt+P instead.
    ═══════════════════════════════════════════════════════════ */
 
 (function () {
@@ -24,108 +23,124 @@
     return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable;
   }
 
+  function blurAndRefocus() {
+    // Move focus out of any button so Space doesn't re-trigger it
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
+    if (window.XyloEditor) window.XyloEditor.focus();
+  }
+
   function onKeyDown(e) {
     const mod = e.ctrlKey || e.metaKey;
+    const alt = e.altKey;
     const key = e.key;
 
-    /* ── Modifier combos ─────────────────────────────────── */
+    /* ── Ctrl / Cmd combos ───────────────────────────────── */
 
-    // Ctrl/Cmd + S — Save
-    if (mod && (key === 's' || key === 'S')) {
+    // Ctrl+S — Save
+    if (mod && !alt && (key === 's' || key === 'S')) {
       e.preventDefault();
       if (window.XyloApp) window.XyloApp.saveActiveFile();
       return;
     }
 
-    // Ctrl/Cmd + N — New file
-    if (mod && (key === 'n' || key === 'N')) {
-      e.preventDefault();
-      if (window.XyloProjects) window.XyloProjects.promptNewFile();
-      return;
-    }
-
-    // Ctrl/Cmd + O — New project
-    if (mod && (key === 'o' || key === 'O')) {
-      e.preventDefault();
-      if (window.XyloApp) window.XyloApp.openModal('modal-new');
-      return;
-    }
-
-    // Ctrl/Cmd + K — Open settings
-    if (mod && (key === 'k' || key === 'K')) {
+    // Ctrl+K — Settings
+    if (mod && !alt && (key === 'k' || key === 'K')) {
       e.preventDefault();
       if (window.XyloApp) window.XyloApp.openModal('modal-settings');
+      blurAndRefocus();
       return;
     }
 
-    // Ctrl/Cmd + B — Toggle sidebar
-    if (mod && (key === 'b' || key === 'B')) {
+    // Ctrl+B — Toggle sidebar
+    if (mod && !alt && (key === 'b' || key === 'B')) {
       e.preventDefault();
       if (window.XyloApp) window.XyloApp.toggleSidebar();
+      blurAndRefocus();
       return;
     }
 
-    // Ctrl/Cmd + J — Toggle console
-    if (mod && (key === 'j' || key === 'J')) {
+    // Ctrl+J — Toggle console
+    if (mod && !alt && (key === 'j' || key === 'J')) {
       e.preventDefault();
       if (window.XyloApp) window.XyloApp.toggleConsole();
+      blurAndRefocus();
       return;
     }
 
-    // Ctrl/Cmd + P — Toggle preview
-    if (mod && (key === 'p' || key === 'P')) {
+    // Ctrl+P — Toggle preview
+    if (mod && !alt && (key === 'p' || key === 'P')) {
       e.preventDefault();
       if (window.XyloApp) window.XyloApp.togglePreview();
+      blurAndRefocus();
       return;
     }
 
-    // Ctrl/Cmd + G — Go to line
-    if (mod && (key === 'g' || key === 'G')) {
+    // Ctrl+G — Go to line
+    if (mod && !alt && (key === 'g' || key === 'G')) {
       e.preventDefault();
       if (window.XyloApp) window.XyloApp.promptGoToLine();
       return;
     }
 
-    // Ctrl/Cmd + / — handled by CodeMirror inside the editor
-    // Ctrl/Cmd + F — handled by CodeMirror inside the editor
+    /* ── Alt combos (browser-safe) ───────────────────────── */
 
-    /* ── F-keys ──────────────────────────────────────────── */
-
-    // F5 — Run
-    if (key === 'F5') {
+    // Alt+N — New file
+    if (alt && !mod && (key === 'n' || key === 'N')) {
       e.preventDefault();
-      if (window.XyloApp) window.XyloApp.run();
+      if (window.XyloApp) window.XyloApp.promptNewFile();
       return;
     }
 
-    // Shift + F5 — Run file only
-    if (e.shiftKey && key === 'F5') {
+    // Alt+P — New project
+    if (alt && !mod && (key === 'p' || key === 'P')) {
       e.preventDefault();
-      if (window.XyloApp) window.XyloApp.runFile();
+      if (window.XyloApp) window.XyloApp.openModal('modal-new');
+      return;
+    }
+
+    // Alt+F — Format active file
+    if (alt && !mod && (key === 'f' || key === 'F')) {
+      e.preventDefault();
+      if (window.XyloEditor && window.XyloEditor.formatActiveFile()) {
+        if (window.XyloApp) window.XyloApp.toast('Formatted');
+      } else {
+        if (window.XyloApp) window.XyloApp.toast('Nothing to format here', true);
+      }
+      return;
+    }
+
+    /* ── F-keys ──────────────────────────────────────────── */
+
+    if (key === 'F5') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (window.XyloApp) window.XyloApp.runFile();
+      } else {
+        if (window.XyloApp) window.XyloApp.run();
+      }
       return;
     }
 
     /* ── Escape ──────────────────────────────────────────── */
 
     if (key === 'Escape') {
-      // Close any open modal
       const openModal = document.querySelector('.modal-bg.open');
       if (openModal) {
         openModal.classList.remove('open');
         return;
       }
-      // Close find bar
       if (findOpen) {
         closeFind();
         return;
       }
     }
 
-    /* ── Plain keys (only when not typing) ───────────────── */
+    /* ── Plain keys ──────────────────────────────────────── */
 
     if (isTypingContext(e.target)) return;
 
-    // / — Open find
     if (key === '/') {
       e.preventDefault();
       openFind();
