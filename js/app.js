@@ -695,19 +695,20 @@
 
   /* ─── Public API ──────────────────────────────────────── */
   window.XyloApp = {
-    boot,
-    toast,
-    openModal,
-    closeModal,
-    confirmModal,
-    run,
-    runFile,
-    saveActiveFile,
-    toggleSidebar,
-    toggleConsole,
-    togglePreview,
-    promptGoToLine,
-  };
+  boot,
+  toast,
+  openModal,
+  closeModal,
+  confirmModal,
+  run,
+  runFile,
+  saveActiveFile,
+  toggleSidebar,
+  toggleConsole,
+  togglePreview,
+  promptGoToLine,
+  promptNewFile,
+};
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
