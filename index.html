@@ -1,1 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="XYLO Studio — Code anywhere. Build anything.">
+<title>XYLO Studio</title>
 
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- CodeMirror 5 — stable, well-documented, we know it works -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+
+<!-- Our styles -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     TOAST
+     ═══════════════════════════════════════════════════════ -->
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     HIDDEN FILE INPUTS
+     ═══════════════════════════════════════════════════════ -->
+<input type="file" id="file-import" multiple style="display:none">
+
+<!-- ═══════════════════════════════════════════════════════
+     NEW PROJECT MODAL
+     ═══════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-new" aria-hidden="true">
+  <div class="modal" role="dialog" aria-labelledby="modal-new-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="modal-new-title">New Project</h2>
+      <button class="icon-btn" data-close="modal-new" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <label class="field-label" for="np-name">Project Name</label>
+      <input class="field" id="np-name" type="text" placeholder="My Awesome App" autocomplete="off" spellcheck="false" maxlength="40">
+
+      <label class="field-label" for="np-type">Project Type</label>
+      <select class="field" id="np-type">
+        <option value="web">Web — HTML + CSS + JS</option>
+        <option value="html">HTML Only</option>
+        <option value="react">React App</option>
+        <option value="python">Python Script</option>
+        <option value="js">JavaScript / Node</option>
+        <option value="java">Java</option>
+        <option value="cpp">C / C++</option>
+        <option value="go">Go</option>
+        <option value="rust">Rust</option>
+        <option value="php">PHP</option>
+        <option value="ruby">Ruby</option>
+        <option value="empty">Empty Project</option>
+      </select>
+
+      <label class="field-label">Icon</label>
+      <div class="emoji-grid" id="np-icon-grid"></div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="modal-new">Cancel</button>
+      <button class="btn btn-primary" id="np-create">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SETTINGS MODAL
+     ═══════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-settings" aria-hidden="true">
+  <div class="modal" role="dialog" aria-labelledby="modal-settings-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="modal-settings-title">Settings</h2>
+      <button class="icon-btn" data-close="modal-settings" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <label class="field-label" for="s-theme">Editor Theme</label>
+      <select class="field" id="s-theme">
+        <option value="xylo-dark">XYLO Dark</option>
+        <option value="dracula">Dracula</option>
+        <option value="monokai">Monokai</option>
+        <option value="material-darker">Material Darker</option>
+      </select>
+
+      <div class="setting-row">
+        <span class="setting-label">Font Size</span>
+        <div class="stepper">
+          <button class="stepper-btn" id="fs-down" aria-label="Decrease font size">
+            <i data-lucide="minus"></i>
+          </button>
+          <span class="stepper-value" id="s-fontsize">13</span>
+          <button class="stepper-btn" id="fs-up" aria-label="Increase font size">
+            <i data-lucide="plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <label class="field-label" for="s-tabsize">Tab Size</label>
+      <select class="field" id="s-tabsize">
+        <option value="2">2 spaces</option>
+        <option value="4">4 spaces</option>
+      </select>
+
+      <div class="setting-row">
+        <span class="setting-label">Line Numbers</span>
+        <button class="toggle on" id="t-linenumbers" aria-pressed="true"><span class="toggle-knob"></span></button>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Line Wrap</span>
+        <button class="toggle" id="t-linewrap" aria-pressed="false"><span class="toggle-knob"></span></button>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Active Line</span>
+        <button class="toggle on" id="t-activeline" aria-pressed="true"><span class="toggle-knob"></span></button>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Auto Close Brackets</span>
+        <button class="toggle on" id="t-autoclose" aria-pressed="true"><span class="toggle-knob"></span></button>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" data-close="modal-settings">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     CONFIRM MODAL (reusable)
+     ═══════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-confirm" aria-hidden="true">
+  <div class="modal modal-sm" role="dialog">
+    <div class="modal-head">
+      <h2 class="modal-title" id="confirm-title">Are you sure?</h2>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-message" id="confirm-message"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     APP
+     ═══════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- ─── Titlebar ─── -->
+  <header id="titlebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 60 60" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#00D4FF"/>
+              <stop offset="1" stop-color="#00FFFF"/>
+            </linearGradient>
+          </defs>
+          <line x1="10" y1="8" x2="50" y2="52" stroke="url(#brandGrad)" stroke-width="5.5" stroke-linecap="round"/>
+          <line x1="50" y1="8" x2="10" y2="52" stroke="url(#brandGrad)" stroke-width="5.5" stroke-linecap="round"/>
+          <circle cx="30" cy="30" r="3.5" fill="#00FFFF"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">XYLO</span>
+        <span class="brand-sub">Studio</span>
+      </div>
+      <span class="brand-version">v1.0</span>
+    </div>
+
+    <div class="titlebar-crumb" id="tb-crumb"></div>
+
+    <div class="titlebar-actions">
+      <button class="tb-action" id="btn-run" title="Run code (F5)">
+        <i data-lucide="play"></i><span>Run</span>
+      </button>
+      <button class="tb-action tb-icon" id="btn-preview" title="Toggle preview">
+        <i data-lucide="monitor"></i>
+      </button>
+      <button class="tb-action tb-icon" id="btn-ai" title="Toggle AI">
+        <i data-lucide="sparkles"></i>
+      </button>
+      <button class="tb-action tb-icon" id="btn-settings" title="Settings">
+        <i data-lucide="settings"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── Main Body ─── -->
+  <div id="main">
+
+    <!-- Activity bar (left rail) -->
+    <nav id="activity-bar" aria-label="Activity">
+      <button class="act-item active" data-act="projects" title="Projects" aria-label="Projects">
+        <i data-lucide="folder"></i>
+      </button>
+      <button class="act-item" data-act="files" title="Files" aria-label="Files">
+        <i data-lucide="files"></i>
+      </button>
+      <button class="act-item" data-act="samples" title="Samples" aria-label="Samples">
+        <i data-lucide="gamepad-2"></i>
+      </button>
+      <button class="act-item" data-act="ai" title="XYLO AI" aria-label="XYLO AI">
+        <i data-lucide="sparkles"></i>
+      </button>
+      <div class="act-spacer"></div>
+      <button class="act-item" id="btn-collapse-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar">
+        <i data-lucide="panel-left"></i>
+      </button>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" aria-label="Sidebar">
+
+      <!-- Projects panel -->
+      <div class="side-panel active" data-panel="projects">
+        <div class="side-head">
+          <h3 class="side-title">Projects</h3>
+          <button class="icon-btn" id="btn-new-project" title="New project" aria-label="New project">
+            <i data-lucide="plus"></i>
+          </button>
+        </div>
+        <div class="side-body" id="projects-list"></div>
+      </div>
+
+      <!-- Files panel -->
+      <div class="side-panel" data-panel="files">
+        <div class="side-head">
+          <button class="icon-btn" id="btn-back-projects" title="Back to projects" aria-label="Back to projects">
+            <i data-lucide="arrow-left"></i>
+          </button>
+          <h3 class="side-title" id="files-project-name">Files</h3>
+          <button class="icon-btn" id="btn-new-file" title="New file" aria-label="New file">
+            <i data-lucide="file-plus"></i>
+          </button>
+        </div>
+        <div class="side-body" id="files-list"></div>
+      </div>
+
+      <!-- Samples panel -->
+      <div class="side-panel" data-panel="samples">
+        <div class="side-head">
+          <h3 class="side-title">Samples</h3>
+        </div>
+        <div class="side-body" id="samples-list"></div>
+      </div>
+
+      <!-- AI panel (placeholder for Phase 2) -->
+      <div class="side-panel" data-panel="ai">
+        <div class="side-head">
+          <h3 class="side-title">XYLO AI</h3>
+          <span class="badge-soon">Phase 2</span>
+        </div>
+        <div class="side-body">
+          <div class="placeholder-block">
+            <i data-lucide="sparkles"></i>
+            <p>XYLO AI is coming in Phase 2.</p>
+            <p class="muted">DeepSeek-powered coding tutor, debugging partner, and project wizard.</p>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Editor column -->
+    <section id="editor-column">
+
+      <!-- Welcome / no project open -->
+      <div id="welcome" class="welcome">
+        <div class="welcome-hero">
+          <div class="welcome-logo">
+            <svg viewBox="0 0 60 60" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="welcomeGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#00D4FF"/>
+                  <stop offset="1" stop-color="#00FFFF"/>
+                </linearGradient>
+              </defs>
+              <line x1="10" y1="8" x2="50" y2="52" stroke="url(#welcomeGrad)" stroke-width="5.5" stroke-linecap="round"/>
+              <line x1="50" y1="8" x2="10" y2="52" stroke="url(#welcomeGrad)" stroke-width="5.5" stroke-linecap="round"/>
+              <circle cx="30" cy="30" r="3.5" fill="#00FFFF"/>
+            </svg>
+          </div>
+          <h1 class="welcome-title">Code anywhere.<br>Build anything.</h1>
+          <p class="welcome-sub">XYLO Studio runs in your browser. No install. No setup. Just open and code.</p>
+          <div class="welcome-actions">
+            <button class="btn btn-primary" id="welcome-new">
+              <i data-lucide="plus"></i> New Project
+            </button>
+            <button class="btn btn-ghost" id="welcome-samples">
+              <i data-lucide="gamepad-2"></i> Try a Sample
+            </button>
+          </div>
+        </div>
+
+        <div class="welcome-samples" id="welcome-samples-grid"></div>
+      </div>
+
+      <!-- Editor UI (hidden until project open) -->
+      <div id="editor-ui" class="editor-ui hidden">
+
+        <!-- Tab bar -->
+        <div class="tabbar" role="tablist">
+          <div class="tabs" id="tabs"></div>
+          <button class="tab-add" id="tab-add" title="New file" aria-label="New file">
+            <i data-lucide="plus"></i>
+          </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar" role="toolbar">
+          <button class="tb-btn" id="tb-run" title="Run (F5)">
+            <i data-lucide="play"></i><span class="tb-label">Run</span>
+          </button>
+          <span class="tb-sep"></span>
+          <button class="tb-btn" id="tb-format" title="Format (Shift+Alt+F)">
+            <i data-lucide="align-left"></i><span class="tb-label">Format</span>
+          </button>
+          <button class="tb-btn" id="tb-find" title="Find (Ctrl+F)">
+            <i data-lucide="search"></i><span class="tb-label">Find</span>
+          </button>
+          <button class="tb-btn" id="tb-comment" title="Comment (Ctrl+/)">
+            <i data-lucide="message-square"></i><span class="tb-label">Comment</span>
+          </button>
+          <span class="tb-sep"></span>
+          <button class="tb-btn" id="tb-console" title="Toggle console">
+            <i data-lucide="terminal"></i><span class="tb-label">Console</span>
+          </button>
+          <span class="tb-spacer"></span>
+          <span class="lang-badge" id="lang-badge">—</span>
+        </div>
+
+        <!-- Find bar -->
+        <div class="findbar hidden" id="findbar">
+          <input class="find-input" id="find-input" type="text" placeholder="Find…" spellcheck="false">
+          <input class="find-input" id="replace-input" type="text" placeholder="Replace…" spellcheck="false">
+          <button class="find-btn" id="find-next">Next</button>
+          <button class="find-btn" id="find-prev">Prev</button>
+          <button class="find-btn" id="find-replace">Replace</button>
+          <button class="find-btn" id="find-replace-all">All</button>
+          <span class="find-info" id="find-info"></span>
+          <button class="icon-btn" id="find-close" aria-label="Close find">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <!-- CodeMirror mount -->
+        <div id="editor-mount"></div>
+
+        <!-- Console / output -->
+        <div class="console hidden" id="console">
+          <div class="console-head">
+            <span class="console-title">Console</span>
+            <button class="icon-btn" id="console-clear" title="Clear">
+              <i data-lucide="trash-2"></i>
+            </button>
+            <button class="icon-btn" id="console-close" title="Close">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+          <div class="console-body" id="console-body"></div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Right panel (preview) -->
+    <aside id="right-panel" class="right-panel hidden" aria-label="Preview">
+      <div class="right-head">
+        <span class="right-title">Preview</span>
+        <button class="icon-btn" id="right-refresh" title="Refresh">
+          <i data-lucide="refresh-cw"></i>
+        </button>
+        <button class="icon-btn" id="right-open" title="Open in new tab">
+          <i data-lucide="external-link"></i>
+        </button>
+        <button class="icon-btn" id="right-close" title="Close preview">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <iframe id="preview-frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"></iframe>
+    </aside>
+
+  </div>
+
+  <!-- ─── Statusbar ─── -->
+  <footer id="statusbar">
+    <div class="status-left">
+      <span class="status-item" id="status-project">No Project</span>
+      <span class="status-sep">·</span>
+      <span class="status-item" id="status-lang">—</span>
+    </div>
+    <div class="status-right">
+      <span class="status-item" id="status-cursor">Ln 1, Col 1</span>
+      <span class="status-sep">·</span>
+      <span class="status-item" id="status-files">0 files</span>
+      <span class="status-sep">·</span>
+      <span class="status-item">UTF-8</span>
+    </div>
+  </footer>
+
+  <!-- ─── Mobile top bar ─── -->
+  <header id="mob-top">
+    <button class="mob-btn" id="mob-menu" aria-label="Menu">
+      <i data-lucide="menu"></i>
+    </button>
+    <div class="mob-brand">
+      <span class="brand-name">XYLO</span>
+    </div>
+    <button class="mob-btn" id="mob-run" aria-label="Run">
+      <i data-lucide="play"></i>
+    </button>
+  </header>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════════════════ -->
+
+<!-- CodeMirror core + modes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/swift/swift.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+
+<!-- CodeMirror addons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
+
+<!-- Lucide icons -->
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<!-- App modules (order matters) -->
+<script src="js/icons.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/shortcuts.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
