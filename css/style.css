@@ -5,6 +5,7 @@
 /* ─── Design tokens ─────────────────────────────────────── */
 :root {
   /* Colors — the XYLO palette */
+  --efs: 13px;
   --blue:      #00D4FF;
   --cyan:      #00FFFF;
   --blue-dim:  #0099CC;
