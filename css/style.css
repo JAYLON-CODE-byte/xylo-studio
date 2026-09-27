@@ -1036,7 +1036,7 @@ a:hover { color: var(--cyan); }
 .CodeMirror {
   height: 100% !important;
   font-family: var(--font-mono) !important;
-  font-size: 13px !important;
+  font-size: var(--efs) !important;
   line-height: 1.65 !important;
   background: var(--bg-1) !important;
 }
