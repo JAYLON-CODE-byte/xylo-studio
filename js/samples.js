@@ -215,7 +215,7 @@ function draw() {
   ctx.shadowBlur = 14;
   snake.forEach((s, i) => {
     const alpha = 1 - (i / snake.length) * 0.55;
-    ctx.fillStyle = i === 0 ? '#00FFFF' : `rgba(0, 212, 255, ${alpha})`;
+    ctx.fillStyle = i === 0 ? '#00FFFF' : 'rgba(0, 212, 255, ' + alpha + ')';
     ctx.fillRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2);
   });
 
