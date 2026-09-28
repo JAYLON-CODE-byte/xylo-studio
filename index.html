@@ -387,23 +387,70 @@
 
     </section>
 
-    <!-- Right panel (preview) -->
-    <aside id="right-panel" class="right-panel hidden" aria-label="Preview">
-      <div class="right-head">
-        <span class="right-title">Preview</span>
+        <!-- Right panel (preview + AI) -->
+    <aside id="right-panel" class="right-panel hidden" aria-label="Preview and AI">
+
+      <div class="right-tabs">
+        <button class="right-tab active" data-tab="preview">
+          <i data-lucide="monitor"></i><span>Preview</span>
+        </button>
+        <button class="right-tab" data-tab="ai">
+          <i data-lucide="sparkles"></i><span>AI</span>
+        </button>
+        <div class="right-tab-spacer"></div>
         <button class="icon-btn" id="right-refresh" title="Refresh">
           <i data-lucide="refresh-cw"></i>
         </button>
         <button class="icon-btn" id="right-open" title="Open in new tab">
           <i data-lucide="external-link"></i>
         </button>
-        <button class="icon-btn" id="right-close" title="Close preview">
+        <button class="icon-btn" id="right-close" title="Close panel">
           <i data-lucide="x"></i>
         </button>
       </div>
-      <iframe id="preview-frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"></iframe>
-    </aside>
 
+      <div class="right-pane active" data-pane="preview">
+        <iframe id="preview-frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"></iframe>
+      </div>
+
+      <div class="right-pane" data-pane="ai">
+        <div class="ai-setup hidden" id="ai-setup">
+          <div class="ai-setup-card">
+            <div class="ai-setup-icon"><i data-lucide="sparkles"></i></div>
+            <h2>XYLO AI</h2>
+            <p>Chat with an AI that can see your code. Free by default — no key needed.</p>
+
+            <label class="field-label" for="ai-provider">Provider</label>
+            <select class="field" id="ai-provider">
+              <option value="pollinations">Pollinations (Free · No key)</option>
+              <option value="deepseek">DeepSeek (Requires API key)</option>
+            </select>
+
+            <div id="ai-key-row" class="hidden">
+              <label class="field-label" for="ai-key">DeepSeek API Key</label>
+              <input class="field" id="ai-key" type="password" placeholder="sk-..." autocomplete="off">
+              <p class="ai-setup-note">Stored in your browser only. Never sent anywhere except DeepSeek.</p>
+            </div>
+
+            <button class="btn btn-primary" id="ai-save-settings">
+              <i data-lucide="check"></i> Save & Start Chatting
+            </button>
+          </div>
+        </div>
+
+        <div class="ai-chat hidden" id="ai-chat">
+          <div class="ai-messages" id="ai-messages"></div>
+          <div class="ai-input-row">
+            <textarea id="ai-input" placeholder="Ask anything about your code…" rows="1"></textarea>
+            <button class="ai-send" id="ai-send" title="Send (Enter)">
+              <i data-lucide="arrow-up"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+       
   </div>
 
   <!-- ─── Statusbar ─── -->
@@ -480,6 +527,7 @@
 <script src="js/editor.js"></script>
 <script src="js/shortcuts.js"></script>
 <script src="js/projects.js"></script>
+<script src="js/ai.js"></script>
 <script src="js/app.js"></script>
 
 </body>
