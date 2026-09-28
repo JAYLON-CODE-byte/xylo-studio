@@ -618,8 +618,17 @@
   /* ─── Wire everything ─────────────────────────────────── */
   function wireUI() {
     // Activity bar
-    document.querySelectorAll('.act-item[data-act]').forEach(btn => {
-      btn.addEventListener('click', () => setPanel(btn.dataset.act));
+        document.querySelectorAll('.act-item[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.act;
+        if (act === 'ai') {
+          const rp = document.getElementById('right-panel');
+          if (rp && rp.classList.contains('hidden')) rp.classList.remove('hidden');
+          window.XyloAI.openAITab();
+          return;
+        }
+        setPanel(act);
+      });
     });
     const collapse = document.getElementById('btn-collapse-sidebar');
     if (collapse) collapse.addEventListener('click', toggleSidebar);
@@ -630,7 +639,11 @@
     const previewBtn = document.getElementById('btn-preview');
     if (previewBtn) previewBtn.addEventListener('click', togglePreview);
     const aiBtn = document.getElementById('btn-ai');
-    if (aiBtn) aiBtn.addEventListener('click', () => { setPanel('ai'); toast('XYLO AI lands in Phase 2'); });
+    if (aiBtn) aiBtn.addEventListener('click', () => {
+      const rp = document.getElementById('right-panel');
+      if (rp && rp.classList.contains('hidden')) rp.classList.remove('hidden');
+      window.XyloAI.openAITab();
+    });
     const settingsBtn = document.getElementById('btn-settings');
     if (settingsBtn) settingsBtn.addEventListener('click', () => openModal('modal-settings'));
 
@@ -758,6 +771,7 @@
     });
     window.XyloEditor.onCursor((line, col) => updateStatus(line, col));
     window.XyloShortcuts.init();
+    window.XyloAI.init();
     restoreSettings();
     buildIconGrid();
     renderProjects();
