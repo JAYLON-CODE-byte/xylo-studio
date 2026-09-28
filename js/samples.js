@@ -39,7 +39,7 @@
       </div>
     </header>
     <canvas id="game" width="400" height="400"></canvas>
-    <p class="hint">Use <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>WASD</kbd>. Space to restart.</p>
+    <p class="hint">Use <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>, <kbd>WASD</kbd>, or swipe. <kbd>Space</kbd> to start.</p>
   </div>
   <script src="game.js"></script>
 </body>
