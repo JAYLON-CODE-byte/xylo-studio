@@ -115,7 +115,7 @@ kbd {
 }`,
 
         'game.js': `// Neon Snake — a playable Snake game
-// Controls: Arrow keys or WASD. Space to restart.
+// Controls: Arrow keys, WASD, or swipe. Space to start/restart.
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -126,16 +126,24 @@ const CELL = 20;
 const COLS = canvas.width / CELL;
 const ROWS = canvas.height / CELL;
 
-let snake, dir, nextDir, food, score, best, alive, tick;
-let lastMove = 0;
-const SPEED = 110; // ms per move
+// Speed: lower = faster. Starts slow, gets faster as you eat.
+const START_SPEED = 210; // ms per move
+const MIN_SPEED = 70;
+const SPEED_STEP = 7; // gets this much faster per food
+
+let state; // 'menu' | 'playing' | 'over'
+let snake, dir, nextDir, food, score, best, speed, lastMove;
 
 function reset() {
-  snake = [{ x: 10, y: 10 }];
+  snake = [
+    { x: 8, y: 10 },
+    { x: 7, y: 10 },
+    { x: 6, y: 10 },
+  ];
   dir = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
   score = 0;
-  alive = true;
+  speed = START_SPEED;
   placeFood();
   scoreEl.textContent = '0';
 }
@@ -155,11 +163,9 @@ function step() {
   dir = nextDir;
   const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-  // Wall collision
   if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
     return endGame();
   }
-  // Self collision
   if (snake.some(s => s.x === head.x && s.y === head.y)) {
     return endGame();
   }
@@ -169,6 +175,7 @@ function step() {
   if (head.x === food.x && head.y === food.y) {
     score++;
     scoreEl.textContent = score;
+    speed = Math.max(MIN_SPEED, speed - SPEED_STEP);
     placeFood();
   } else {
     snake.pop();
@@ -176,17 +183,18 @@ function step() {
 }
 
 function endGame() {
-  alive = false;
+  state = 'over';
   best = Math.max(best || 0, score);
   bestEl.textContent = best;
   try { localStorage.setItem('neon-snake-best', best); } catch (e) {}
+  console.log('Game over. Score:', score, 'Best:', best);
 }
 
 function draw() {
   ctx.fillStyle = '#050508';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Subtle grid
+  // Grid
   ctx.strokeStyle = 'rgba(0, 212, 255, 0.04)';
   ctx.lineWidth = 1;
   for (let i = 1; i < COLS; i++) {
@@ -207,27 +215,57 @@ function draw() {
   ctx.shadowBlur = 14;
   snake.forEach((s, i) => {
     const alpha = 1 - (i / snake.length) * 0.55;
-    ctx.fillStyle = i === 0 ? '#00FFFF' : \`rgba(0, 212, 255, \${alpha})\`;
+    ctx.fillStyle = i === 0 ? '#00FFFF' : `rgba(0, 212, 255, ${alpha})`;
     ctx.fillRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2);
   });
 
   ctx.shadowBlur = 0;
 
-  if (!alive) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#00FFFF';
-    ctx.font = 'bold 22px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillStyle = '#9aa3b2';
-    ctx.fillText('Press SPACE to play again', canvas.width / 2, canvas.height / 2 + 18);
-  }
+  if (state === 'menu') drawMenu();
+  if (state === 'over') drawOver();
+}
+
+function drawMenu() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = '#00FFFF';
+  ctx.font = 'bold 36px system-ui, sans-serif';
+  ctx.fillText('NEON', canvas.width / 2, canvas.height / 2 - 46);
+  ctx.fillText('SNAKE', canvas.width / 2, canvas.height / 2 - 8);
+
+  ctx.fillStyle = '#9aa3b2';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillText('Press SPACE or tap to start', canvas.width / 2, canvas.height / 2 + 38);
+
+  ctx.fillStyle = '#5c6470';
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.fillText('Arrow keys · WASD · swipe', canvas.width / 2, canvas.height / 2 + 64);
+}
+
+function drawOver() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = '#00FFFF';
+  ctx.font = 'bold 28px system-ui, sans-serif';
+  ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 34);
+
+  ctx.fillStyle = '#ff3366';
+  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2 + 4);
+
+  ctx.fillStyle = '#9aa3b2';
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillText('Press SPACE to play again', canvas.width / 2, canvas.height / 2 + 42);
 }
 
 function loop(ts) {
-  if (alive && ts - lastMove > SPEED) {
+  if (state === 'playing' && ts - lastMove > speed) {
     step();
     lastMove = ts;
   }
@@ -235,14 +273,24 @@ function loop(ts) {
   requestAnimationFrame(loop);
 }
 
+function start() {
+  reset();
+  state = 'playing';
+  lastMove = performance.now();
+  console.log('Neon Snake started');
+}
+
+// Keyboard
 document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
 
   if (e.key === ' ' || e.code === 'Space') {
     e.preventDefault();
-    if (!alive) reset();
+    if (state === 'menu' || state === 'over') start();
     return;
   }
+
+  if (state !== 'playing') return;
 
   if (['arrowup', 'w'].includes(key) && dir.y === 0) nextDir = { x: 0, y: -1 };
   if (['arrowdown', 's'].includes(key) && dir.y === 0) nextDir = { x: 0, y: 1 };
@@ -252,13 +300,49 @@ document.addEventListener('keydown', (e) => {
   if (e.key.startsWith('Arrow')) e.preventDefault();
 });
 
+// Touch / swipe
+let touchStart = null;
+canvas.addEventListener('touchstart', (e) => {
+  const t = e.touches[0];
+  touchStart = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+
+canvas.addEventListener('touchend', (e) => {
+  if (state === 'menu' || state === 'over') {
+    start();
+    return;
+  }
+  if (!touchStart) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStart.x;
+  const dy = t.clientY - touchStart.y;
+  const absX = Math.abs(dx), absY = Math.abs(dy);
+  if (Math.max(absX, absY) < 20) return;
+  if (absX > absY) {
+    if (dx > 0 && dir.x === 0) nextDir = { x: 1, y: 0 };
+    if (dx < 0 && dir.x === 0) nextDir = { x: -1, y: 0 };
+  } else {
+    if (dy > 0 && dir.y === 0) nextDir = { x: 0, y: 1 };
+    if (dy < 0 && dir.y === 0) nextDir = { x: 0, y: -1 };
+  }
+  touchStart = null;
+}, { passive: true });
+
+// Mouse click also starts
+canvas.addEventListener('click', () => {
+  if (state === 'menu' || state === 'over') start();
+});
+
+// Init
 try { best = parseInt(localStorage.getItem('neon-snake-best') || '0', 10) || 0; } catch (e) { best = 0; }
 bestEl.textContent = best;
 reset();
-requestAnimationFrame(loop);`,
+state = 'menu';
+console.log('Neon Snake loaded');
+requestAnimationFrame(loop); 
       },
     },
-
+    
     /* ═══════════════════════════════════════════════════════
        2. NEON TODO
        ═══════════════════════════════════════════════════════ */
