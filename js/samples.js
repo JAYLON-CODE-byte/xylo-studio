@@ -1,9 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    XYLO STUDIO — SAMPLE PROJECTS
-   
+
    Four complete, working starter projects. Each one is a real,
    runnable app — not a placeholder. When a user clicks "Try a
    Sample", XYLO creates a new project from these templates.
+
+   IMPORTANT: inner code avoids backticks and ${} entirely.
+   Everything uses plain string concatenation so this file has
+   no escaping issues.
    ═══════════════════════════════════════════════════════════ */
 
 (function () {
@@ -17,7 +21,7 @@
     {
       id: 'snake',
       title: 'Neon Snake',
-      desc: 'A playable Snake game with arrow keys, score, and high score.',
+      desc: 'A playable Snake game. Starts slow, speeds up, saves your best score.',
       icon: 'gamepad-2',
       type: 'web',
       files: {
@@ -39,9 +43,12 @@
       </div>
     </header>
     <canvas id="game" width="400" height="400"></canvas>
-    <p class="hint">Use <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>, <kbd>WASD</kbd>, or swipe. <kbd>Space</kbd> to start.</p>
+    <p class="hint">
+      <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>WASD</kbd> or swipe.
+      <kbd>Space</kbd> to start.
+    </p>
   </div>
-  <script src="game.js"></script>
+  <script src="game.js"><\/script>
 </body>
 </html>`,
 
@@ -96,12 +103,15 @@ canvas {
   border-radius: 8px;
   box-shadow: 0 0 40px rgba(0, 212, 255, 0.15);
   display: block;
+  cursor: pointer;
+  touch-action: none;
 }
 
 .hint {
   margin-top: 16px;
   font-size: 11.5px;
   color: #5c6470;
+  line-height: 1.9;
 }
 
 kbd {
@@ -114,60 +124,62 @@ kbd {
   color: #9aa3b2;
 }`,
 
-        'game.js': `// Neon Snake — a playable Snake game
+        'game.js': `// Neon Snake
 // Controls: Arrow keys, WASD, or swipe. Space to start/restart.
 
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const bestEl = document.getElementById('best');
+var canvas  = document.getElementById('game');
+var ctx     = canvas.getContext('2d');
+var scoreEl = document.getElementById('score');
+var bestEl  = document.getElementById('best');
 
-const CELL = 20;
-const COLS = canvas.width / CELL;
-const ROWS = canvas.height / CELL;
+var CELL = 20;
+var COLS = canvas.width / CELL;
+var ROWS = canvas.height / CELL;
 
-// Speed: lower = faster. Starts slow, gets faster as you eat.
-const START_SPEED = 210; // ms per move
-const MIN_SPEED = 70;
-const SPEED_STEP = 7; // gets this much faster per food
+// Speed in milliseconds between moves. Lower = faster.
+var START_SPEED = 210;
+var MIN_SPEED   = 70;
+var SPEED_STEP  = 7;
 
-let state; // 'menu' | 'playing' | 'over'
-let snake, dir, nextDir, food, score, best, speed, lastMove;
+var state;   // 'menu' | 'playing' | 'over'
+var snake, dir, nextDir, food, score, best, speed, lastMove;
 
 function reset() {
   snake = [
     { x: 8, y: 10 },
     { x: 7, y: 10 },
-    { x: 6, y: 10 },
+    { x: 6, y: 10 }
   ];
-  dir = { x: 1, y: 0 };
+  dir     = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
-  score = 0;
-  speed = START_SPEED;
+  score   = 0;
+  speed   = START_SPEED;
   placeFood();
   scoreEl.textContent = '0';
 }
 
 function placeFood() {
   while (true) {
-    const x = Math.floor(Math.random() * COLS);
-    const y = Math.floor(Math.random() * ROWS);
-    if (!snake.some(s => s.x === x && s.y === y)) {
-      food = { x, y };
-      return;
+    var x = Math.floor(Math.random() * COLS);
+    var y = Math.floor(Math.random() * ROWS);
+    var collision = false;
+    for (var i = 0; i < snake.length; i++) {
+      if (snake[i].x === x && snake[i].y === y) { collision = true; break; }
     }
+    if (!collision) { food = { x: x, y: y }; return; }
   }
 }
 
 function step() {
   dir = nextDir;
-  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+  var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
   if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
-    return endGame();
+    endGame();
+    return;
   }
-  if (snake.some(s => s.x === head.x && s.y === head.y)) {
-    return endGame();
+  for (var i = 0; i < snake.length; i++) {
+    if (snake[i].x === head.x && snake[i].y === head.y) { endGame(); return; }
   }
 
   snake.unshift(head);
@@ -175,7 +187,7 @@ function step() {
   if (head.x === food.x && head.y === food.y) {
     score++;
     scoreEl.textContent = score;
-    speed = Math.max(MIN_SPEED, speed - SPEED_STEP);
+    if (speed > MIN_SPEED) speed -= SPEED_STEP;
     placeFood();
   } else {
     snake.pop();
@@ -184,10 +196,10 @@ function step() {
 
 function endGame() {
   state = 'over';
-  best = Math.max(best || 0, score);
+  if (!best || score > best) best = score;
   bestEl.textContent = best;
-  try { localStorage.setItem('neon-snake-best', best); } catch (e) {}
-  console.log('Game over. Score:', score, 'Best:', best);
+  try { localStorage.setItem('neon-snake-best', String(best)); } catch (e) {}
+  console.log('Game over. Score: ' + score + ' Best: ' + best);
 }
 
 function draw() {
@@ -197,28 +209,28 @@ function draw() {
   // Grid
   ctx.strokeStyle = 'rgba(0, 212, 255, 0.04)';
   ctx.lineWidth = 1;
-  for (let i = 1; i < COLS; i++) {
-    ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
+  for (var i = 1; i < COLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i * CELL, 0);              ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * CELL);              ctx.lineTo(canvas.width, i * CELL);  ctx.stroke();
   }
 
   // Food
   ctx.shadowColor = '#ff3366';
-  ctx.shadowBlur = 14;
-  ctx.fillStyle = '#ff3366';
+  ctx.shadowBlur  = 14;
+  ctx.fillStyle   = '#ff3366';
   ctx.beginPath();
   ctx.arc(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, CELL / 2 - 3, 0, Math.PI * 2);
   ctx.fill();
 
   // Snake
   ctx.shadowColor = '#00D4FF';
-  ctx.shadowBlur = 14;
-  snake.forEach((s, i) => {
-    const alpha = 1 - (i / snake.length) * 0.55;
-    ctx.fillStyle = i === 0 ? '#00FFFF' : 'rgba(0, 212, 255, ' + alpha + ')';
+  ctx.shadowBlur  = 14;
+  for (var j = 0; j < snake.length; j++) {
+    var s = snake[j];
+    var alpha = 1 - (j / snake.length) * 0.55;
+    ctx.fillStyle = j === 0 ? '#00FFFF' : 'rgba(0, 212, 255, ' + alpha + ')';
     ctx.fillRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2);
-  });
-
+  }
   ctx.shadowBlur = 0;
 
   if (state === 'menu') drawMenu();
@@ -233,7 +245,7 @@ function drawMenu() {
 
   ctx.fillStyle = '#00FFFF';
   ctx.font = 'bold 36px system-ui, sans-serif';
-  ctx.fillText('NEON', canvas.width / 2, canvas.height / 2 - 46);
+  ctx.fillText('NEON',  canvas.width / 2, canvas.height / 2 - 46);
   ctx.fillText('SNAKE', canvas.width / 2, canvas.height / 2 - 8);
 
   ctx.fillStyle = '#9aa3b2';
@@ -242,7 +254,7 @@ function drawMenu() {
 
   ctx.fillStyle = '#5c6470';
   ctx.font = '11px system-ui, sans-serif';
-  ctx.fillText('Arrow keys · WASD · swipe', canvas.width / 2, canvas.height / 2 + 64);
+  ctx.fillText('Arrow keys  ·  WASD  ·  swipe', canvas.width / 2, canvas.height / 2 + 64);
 }
 
 function drawOver() {
@@ -281,8 +293,8 @@ function start() {
 }
 
 // Keyboard
-document.addEventListener('keydown', (e) => {
-  const key = e.key.toLowerCase();
+document.addEventListener('keydown', function (e) {
+  var key = e.key.toLowerCase();
 
   if (e.key === ' ' || e.code === 'Space') {
     e.preventDefault();
@@ -292,44 +304,46 @@ document.addEventListener('keydown', (e) => {
 
   if (state !== 'playing') return;
 
-  if (['arrowup', 'w'].includes(key) && dir.y === 0) nextDir = { x: 0, y: -1 };
-  if (['arrowdown', 's'].includes(key) && dir.y === 0) nextDir = { x: 0, y: 1 };
-  if (['arrowleft', 'a'].includes(key) && dir.x === 0) nextDir = { x: -1, y: 0 };
-  if (['arrowright', 'd'].includes(key) && dir.x === 0) nextDir = { x: 1, y: 0 };
+  if ((key === 'arrowup'    || key === 'w') && dir.y === 0) nextDir = { x: 0, y: -1 };
+  if ((key === 'arrowdown'  || key === 's') && dir.y === 0) nextDir = { x: 0, y: 1 };
+  if ((key === 'arrowleft'  || key === 'a') && dir.x === 0) nextDir = { x: -1, y: 0 };
+  if ((key === 'arrowright' || key === 'd') && dir.x === 0) nextDir = { x: 1, y: 0 };
 
-  if (e.key.startsWith('Arrow')) e.preventDefault();
+  if (e.key.indexOf('Arrow') === 0) e.preventDefault();
 });
 
 // Touch / swipe
-let touchStart = null;
-canvas.addEventListener('touchstart', (e) => {
-  const t = e.touches[0];
+var touchStart = null;
+canvas.addEventListener('touchstart', function (e) {
+  var t = e.touches[0];
   touchStart = { x: t.clientX, y: t.clientY };
 }, { passive: true });
 
-canvas.addEventListener('touchend', (e) => {
+canvas.addEventListener('touchend', function (e) {
   if (state === 'menu' || state === 'over') {
     start();
     return;
   }
   if (!touchStart) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchStart.x;
-  const dy = t.clientY - touchStart.y;
-  const absX = Math.abs(dx), absY = Math.abs(dy);
+  var t = e.changedTouches[0];
+  var dx = t.clientX - touchStart.x;
+  var dy = t.clientY - touchStart.y;
+  var absX = Math.abs(dx);
+  var absY = Math.abs(dy);
   if (Math.max(absX, absY) < 20) return;
+
   if (absX > absY) {
-    if (dx > 0 && dir.x === 0) nextDir = { x: 1, y: 0 };
+    if (dx > 0 && dir.x === 0) nextDir = { x: 1,  y: 0 };
     if (dx < 0 && dir.x === 0) nextDir = { x: -1, y: 0 };
   } else {
-    if (dy > 0 && dir.y === 0) nextDir = { x: 0, y: 1 };
+    if (dy > 0 && dir.y === 0) nextDir = { x: 0, y: 1  };
     if (dy < 0 && dir.y === 0) nextDir = { x: 0, y: -1 };
   }
   touchStart = null;
 }, { passive: true });
 
 // Mouse click also starts
-canvas.addEventListener('click', () => {
+canvas.addEventListener('click', function () {
   if (state === 'menu' || state === 'over') start();
 });
 
@@ -339,10 +353,10 @@ bestEl.textContent = best;
 reset();
 state = 'menu';
 console.log('Neon Snake loaded');
-requestAnimationFrame(loop); 
-      },
+requestAnimationFrame(loop);`
+      }
     },
-    
+
     /* ═══════════════════════════════════════════════════════
        2. NEON TODO
        ═══════════════════════════════════════════════════════ */
@@ -377,11 +391,12 @@ requestAnimationFrame(loop);
       <button data-filter="all" class="active">All</button>
       <button data-filter="active">Active</button>
       <button data-filter="done">Done</button>
+      <button id="clear-done" class="clear-done">Clear done</button>
     </div>
 
     <ul class="list" id="list"></ul>
   </div>
-  <script src="script.js"></script>
+  <script src="script.js"><\/script>
 </body>
 </html>`,
 
@@ -397,10 +412,7 @@ body {
   justify-content: center;
 }
 
-.app {
-  width: 100%;
-  max-width: 420px;
-}
+.app { width: 100%; max-width: 420px; }
 
 h1 {
   font-size: 22px;
@@ -420,11 +432,7 @@ h1 {
   margin-bottom: 24px;
 }
 
-.input-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
+.input-row { display: flex; gap: 8px; margin-bottom: 16px; }
 
 .input-row input {
   flex: 1;
@@ -453,11 +461,7 @@ h1 {
 }
 .input-row button:hover { background: #00FFFF; }
 
-.filters {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 18px;
-}
+.filters { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
 
 .filters button {
   background: transparent;
@@ -476,13 +480,10 @@ h1 {
   border-color: rgba(0, 212, 255, 0.4);
   background: rgba(0, 212, 255, 0.08);
 }
+.filters .clear-done { margin-left: auto; color: #3a4048; }
+.filters .clear-done:hover { color: #ff3366; border-color: rgba(255, 51, 102, 0.3); }
 
-.list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
 .item {
   display: flex;
@@ -498,6 +499,7 @@ h1 {
 
 .item input[type="checkbox"] {
   appearance: none;
+  -webkit-appearance: none;
   width: 18px;
   height: 18px;
   border: 1.5px solid #3a4048;
@@ -507,10 +509,7 @@ h1 {
   flex-shrink: 0;
   transition: all 0.15s;
 }
-.item input[type="checkbox"]:checked {
-  background: #00D4FF;
-  border-color: #00D4FF;
-}
+.item input[type="checkbox"]:checked { background: #00D4FF; border-color: #00D4FF; }
 .item input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
@@ -528,12 +527,9 @@ h1 {
   font-size: 14px;
   color: #e8ecf1;
   word-break: break-word;
-  transition: color 0.15s, text-decoration 0.15s;
+  transition: color 0.15s;
 }
-.item.done .text {
-  color: #3a4048;
-  text-decoration: line-through;
-}
+.item.done .text { color: #3a4048; text-decoration: line-through; }
 
 .item .del {
   width: 24px;
@@ -559,20 +555,21 @@ h1 {
 
         'script.js': `// Neon Todo — with localStorage persistence
 
-const STORAGE_KEY = 'neon-todo-tasks';
+var STORAGE_KEY = 'neon-todo-tasks';
 
-const form = document.getElementById('form');
-const input = document.getElementById('input');
-const list = document.getElementById('list');
-const summary = document.getElementById('summary');
-const filters = document.getElementById('filters');
+var form     = document.getElementById('form');
+var input    = document.getElementById('input');
+var list     = document.getElementById('list');
+var summary  = document.getElementById('summary');
+var filters  = document.getElementById('filters');
+var clearBtn = document.getElementById('clear-done');
 
-let tasks = load();
-let filter = 'all';
+var tasks  = load();
+var filter = 'all';
 
 function load() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    var raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) { return []; }
 }
@@ -582,38 +579,38 @@ function save() {
 }
 
 function render() {
-  const visible = tasks.filter(t => {
+  var visible = tasks.filter(function (t) {
     if (filter === 'active') return !t.done;
-    if (filter === 'done') return t.done;
+    if (filter === 'done')   return  t.done;
     return true;
   });
 
   list.innerHTML = '';
 
-  if (!visible.length) {
-    const empty = document.createElement('li');
+  if (visible.length === 0) {
+    var empty = document.createElement('li');
     empty.className = 'empty';
     empty.textContent = tasks.length ? 'Nothing here.' : 'Add your first task above.';
     list.appendChild(empty);
   } else {
-    visible.forEach(task => {
-      const item = document.createElement('li');
+    visible.forEach(function (task) {
+      var item = document.createElement('li');
       item.className = 'item' + (task.done ? ' done' : '');
 
-      const checkbox = document.createElement('input');
+      var checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = task.done;
-      checkbox.addEventListener('change', () => toggle(task.id));
+      checkbox.addEventListener('change', function () { toggle(task.id); });
 
-      const text = document.createElement('span');
+      var text = document.createElement('span');
       text.className = 'text';
       text.textContent = task.text;
 
-      const del = document.createElement('button');
+      var del = document.createElement('button');
       del.className = 'del';
       del.textContent = '×';
       del.title = 'Delete';
-      del.addEventListener('click', () => remove(task.id));
+      del.addEventListener('click', function () { remove(task.id); });
 
       item.appendChild(checkbox);
       item.appendChild(text);
@@ -622,54 +619,67 @@ function render() {
     });
   }
 
-  const active = tasks.filter(t => !t.done).length;
-  summary.textContent = tasks.length === 0
-    ? '0 tasks'
-    : \`\${active} active · \${tasks.length - active} done\`;
+  var active = tasks.filter(function (t) { return !t.done; }).length;
+  var doneCount = tasks.length - active;
+
+  if (tasks.length === 0) {
+    summary.textContent = '0 tasks';
+  } else {
+    summary.textContent = active + ' active · ' + doneCount + ' done';
+  }
 
   save();
 }
 
 function add(text) {
-  const trimmed = text.trim();
+  var trimmed = text.trim();
   if (!trimmed) return;
   tasks.unshift({
     id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
     text: trimmed,
-    done: false,
+    done: false
   });
   render();
 }
 
 function toggle(id) {
-  const task = tasks.find(t => t.id === id);
+  var task = tasks.find(function (t) { return t.id === id; });
   if (task) task.done = !task.done;
   render();
 }
 
 function remove(id) {
-  tasks = tasks.filter(t => t.id !== id);
+  tasks = tasks.filter(function (t) { return t.id !== id; });
   render();
 }
 
-form.addEventListener('submit', (e) => {
+function clearDone() {
+  tasks = tasks.filter(function (t) { return !t.done; });
+  render();
+}
+
+form.addEventListener('submit', function (e) {
   e.preventDefault();
   add(input.value);
   input.value = '';
   input.focus();
 });
 
-filters.addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-filter]');
+filters.addEventListener('click', function (e) {
+  var btn = e.target.closest('button[data-filter]');
   if (!btn) return;
   filter = btn.dataset.filter;
-  filters.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+  filters.querySelectorAll('button[data-filter]').forEach(function (b) {
+    b.classList.toggle('active', b === btn);
+  });
   render();
 });
 
+clearBtn.addEventListener('click', clearDone);
+
 render();
-console.log('Neon Todo ready. ' + tasks.length + ' tasks loaded.');`,
-      },
+console.log('Neon Todo ready. ' + tasks.length + ' tasks loaded.');`
+      }
     },
 
     /* ═══════════════════════════════════════════════════════
@@ -698,9 +708,9 @@ console.log('Neon Todo ready. ' + tasks.length + ' tasks loaded.');`,
     </div>
     <div class="keys" id="keys">
       <button data-key="clear" class="fn">C</button>
-      <button data-key="back" class="fn">←</button>
-      <button data-key="/" class="op">÷</button>
-      <button data-key="*" class="op">×</button>
+      <button data-key="back"  class="fn">←</button>
+      <button data-key="/"     class="op">÷</button>
+      <button data-key="*"     class="op">×</button>
 
       <button data-key="7">7</button>
       <button data-key="8">8</button>
@@ -720,9 +730,12 @@ console.log('Neon Todo ready. ' + tasks.length + ' tasks loaded.');`,
       <button data-key="0" class="zero">0</button>
       <button data-key=".">.</button>
     </div>
-    <p class="hint">Numbers, <kbd>+</kbd> <kbd>-</kbd> <kbd>*</kbd> <kbd>/</kbd>, <kbd>Enter</kbd>, <kbd>Esc</kbd></p>
+    <p class="hint">
+      <kbd>0</kbd>-<kbd>9</kbd>  ·  <kbd>+</kbd> <kbd>-</kbd> <kbd>*</kbd> <kbd>/</kbd>
+      ·  <kbd>Enter</kbd>  ·  <kbd>Esc</kbd>
+    </p>
   </div>
-  <script src="script.js"></script>
+  <script src="script.js"><\/script>
 </body>
 </html>`,
 
@@ -777,11 +790,7 @@ body {
   text-overflow: ellipsis;
 }
 
-.keys {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
+.keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
 .keys button {
   background: #16161f;
@@ -794,6 +803,7 @@ body {
   cursor: pointer;
   transition: all 0.1s;
   user-select: none;
+  -webkit-user-select: none;
 }
 .keys button:hover { background: #1e1e28; }
 .keys button:active { transform: scale(0.96); background: #252530; }
@@ -815,6 +825,7 @@ body {
   text-align: center;
   font-size: 10.5px;
   color: #3a4048;
+  line-height: 1.9;
 }
 
 kbd {
@@ -829,23 +840,24 @@ kbd {
 
         'script.js': `// Calculator — state machine with keyboard support
 
-const currentEl = document.getElementById('current');
-const historyEl = document.getElementById('history');
+var currentEl = document.getElementById('current');
+var historyEl = document.getElementById('history');
 
-let current = '0';
-let previous = null;
-let operator = null;
-let justEvaluated = false;
+var current       = '0';
+var previous      = null;
+var operator      = null;
+var justEvaluated = false;
 
 function updateDisplay() {
   currentEl.textContent = current;
-  historyEl.textContent = previous !== null && operator
-    ? \`\${previous} \${opSymbol(operator)}\`
+  historyEl.textContent = (previous !== null && operator)
+    ? previous + ' ' + opSymbol(operator)
     : '';
 }
 
 function opSymbol(op) {
-  return { '+': '+', '-': '−', '*': '×', '/': '÷' }[op] || op;
+  var map = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  return map[op] || op;
 }
 
 function inputDigit(d) {
@@ -857,7 +869,7 @@ function inputDigit(d) {
 
 function inputDot() {
   if (justEvaluated) { current = '0'; justEvaluated = false; }
-  if (!current.includes('.')) current += '.';
+  if (current.indexOf('.') === -1) current += '.';
   updateDisplay();
 }
 
@@ -874,9 +886,9 @@ function setOperator(op) {
 
 function compute() {
   if (operator === null || previous === null) return;
-  const a = previous;
-  const b = parseFloat(current);
-  let result;
+  var a = previous;
+  var b = parseFloat(current);
+  var result;
   switch (operator) {
     case '+': result = a + b; break;
     case '-': result = a - b; break;
@@ -900,7 +912,7 @@ function clearAll() {
 }
 
 function backspace() {
-  if (justEvaluated) return clearAll();
+  if (justEvaluated) { clearAll(); return; }
   if (current.length > 1) current = current.slice(0, -1);
   else current = '0';
   updateDisplay();
@@ -909,28 +921,29 @@ function backspace() {
 function handleKey(key) {
   if (/^[0-9]$/.test(key)) return inputDigit(key);
   if (key === '.') return inputDot();
-  if (['+', '-', '*', '/'].includes(key)) return setOperator(key);
+  if (['+', '-', '*', '/'].indexOf(key) !== -1) return setOperator(key);
   if (key === '=' || key === 'Enter') return compute();
   if (key === 'clear' || key === 'Escape') return clearAll();
   if (key === 'back' || key === 'Backspace') return backspace();
 }
 
-document.getElementById('keys').addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-key]');
+document.getElementById('keys').addEventListener('click', function (e) {
+  var btn = e.target.closest('button[data-key]');
   if (btn) handleKey(btn.dataset.key);
 });
 
-document.addEventListener('keydown', (e) => {
-  const key = e.key;
-  if (/^[0-9.]$/.test(key)) { handleKey(key); return; }
-  if (['+', '-', '*', '/'].includes(key)) { handleKey(key); return; }
-  if (key === 'Enter' || key === '=') { e.preventDefault(); handleKey('='); return; }
-  if (key === 'Escape') { handleKey('clear'); return; }
-  if (key === 'Backspace') { e.preventDefault(); handleKey('back'); return; }
+document.addEventListener('keydown', function (e) {
+  var key = e.key;
+  if (/^[0-9.]$/.test(key))                          { handleKey(key); return; }
+  if (['+', '-', '*', '/'].indexOf(key) !== -1)      { handleKey(key); return; }
+  if (key === 'Enter' || key === '=')                { e.preventDefault(); handleKey('='); return; }
+  if (key === 'Escape')                              { handleKey('clear'); return; }
+  if (key === 'Backspace')                           { e.preventDefault(); handleKey('back'); return; }
 });
 
-updateDisplay();`,
-      },
+updateDisplay();
+console.log('Calculator ready.');`
+      }
     },
 
     /* ═══════════════════════════════════════════════════════
@@ -1009,21 +1022,21 @@ updateDisplay();`,
     <p>© <span id="year"></span> Your Name. Built with XYLO Studio.</p>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="script.js"><\/script>
 </body>
 </html>`,
 
         'style.css': `* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #050508;
-  --bg-1: #0a0a0f;
-  --ink: #ffffff;
+  --bg:    #050508;
+  --bg-1:  #0a0a0f;
+  --ink:   #ffffff;
   --ink-1: #e8ecf1;
   --ink-2: #9aa3b2;
   --ink-3: #5c6470;
-  --line: rgba(255, 255, 255, 0.08);
-  --blue: #00D4FF;
+  --line:  rgba(255, 255, 255, 0.08);
+  --blue:  #00D4FF;
 }
 
 html { scroll-behavior: smooth; }
@@ -1038,9 +1051,7 @@ body {
 
 nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1163,15 +1174,10 @@ article:hover {
   margin-bottom: 16px;
 }
 
-article h3 {
-  font-size: 16px;
-  margin-bottom: 6px;
-  color: var(--ink);
-}
+article h3 { font-size: 16px; margin-bottom: 6px; color: var(--ink); }
 article p { font-size: 13.5px; color: var(--ink-2); }
 
 #about p { max-width: 560px; font-size: 16px; color: var(--ink-2); }
-
 #contact p { margin-bottom: 20px; font-size: 16px; color: var(--ink-2); }
 
 footer {
@@ -1186,10 +1192,9 @@ footer {
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
-// Smooth scroll for anchor links (fallback for browsers without scroll-behavior)
-document.querySelectorAll('a[href^="#"]').forEach(link => {
-  link.addEventListener('click', (e) => {
-    const target = document.querySelector(link.getAttribute('href'));
+document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+  link.addEventListener('click', function (e) {
+    var target = document.querySelector(link.getAttribute('href'));
     if (target) {
       e.preventDefault();
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1197,10 +1202,10 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
   });
 });
 
-console.log('Portfolio loaded.');`,
-      },
-    },
+console.log('Portfolio loaded.');`
+      }
+    }
   ];
 
-  window.XyloSamples = { SAMPLES };
+  window.XyloSamples = { SAMPLES: SAMPLES };
 })();
