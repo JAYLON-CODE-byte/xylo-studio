@@ -8,33 +8,8 @@
 (function () {
   'use strict';
 
-  /* ─── SAMPLE PROJECTS (Phase 1 placeholders) ──────────── */
-  const SAMPLES = [
-    {
-      id: 'sample-snake',
-      title: 'Neon Snake',
-      desc: 'A classic game, built in about 50 lines of JS.',
-      icon: 'gamepad-2',
-    },
-    {
-      id: 'sample-todo',
-      title: 'Neon Todo',
-      desc: 'A useful todo app with localStorage persistence.',
-      icon: 'check-square',
-    },
-    {
-      id: 'sample-calc',
-      title: 'Calculator',
-      desc: 'A working calculator — your first real app.',
-      icon: 'calculator',
-    },
-    {
-      id: 'sample-portfolio',
-      title: 'Portfolio Page',
-      desc: 'A personal portfolio template. Make it yours.',
-      icon: 'user',
-    },
-  ];
+   /* ─── SAMPLE PROJECTS (loaded from samples.js) ────────── */
+  const SAMPLES = (window.XyloSamples && window.XyloSamples.SAMPLES) || [];
 
   const ICON_CHOICES = [
     '⚡', '🚀', '🌐', '💻', '🎮', '🤖', '🎨', '🔥',
@@ -246,10 +221,11 @@
     window.XyloIcons.refresh();
   }
 
-  /* ─── Render samples ──────────────────────────────────── */
+    /* ─── Render samples ──────────────────────────────────── */
   function renderSamples() {
     const list = document.getElementById('samples-list');
     const welcomeGrid = document.getElementById('welcome-samples-grid');
+
     const buildCard = (s, forSidebar) => {
       const card = document.createElement('div');
       card.className = forSidebar ? 'sample-item' : 'sample-card';
@@ -263,11 +239,10 @@
           <div class="sample-card-title">${s.title}</div>
           <div class="sample-card-desc">${s.desc}</div>`;
       }
-      card.addEventListener('click', () => {
-        toast('Sample projects land in Phase 2');
-      });
+      card.addEventListener('click', () => loadSample(s.id));
       return card;
     };
+
     if (list) {
       list.innerHTML = '';
       SAMPLES.forEach(s => list.appendChild(buildCard(s, true)));
@@ -279,6 +254,23 @@
     window.XyloIcons.refresh();
   }
 
+  /* ─── Load a sample as a new project ──────────────────── */
+  function loadSample(sampleId) {
+    const sample = SAMPLES.find(s => s.id === sampleId);
+    if (!sample) return;
+    const p = window.XyloProjects.create(sample.title, sample.type, sample.icon);
+    // Replace the template files with the sample's actual files
+    Object.keys(sample.files).forEach(fn => {
+      p.files[fn] = sample.files[fn];
+    });
+    window.XyloProjects.persist();
+    openProject(p.id);
+    toast('Loaded: ' + sample.title);
+    // Auto-open preview if it's a web project
+    if (Object.keys(sample.files).some(f => f.endsWith('.html'))) {
+      openPreview();
+    }
+  }
   /* ─── Open / close views ──────────────────────────────── */
   function openProject(id) {
     const p = window.XyloProjects.open(id);
@@ -347,14 +339,111 @@
     if (!p) { crumb.textContent = ''; return; }
     crumb.textContent = `${p.icon || ''} ${p.name}${f ? ' › ' + f : ''}`.trim();
   }
+  /* ─── Preview ─────────────────────────────────────────── */
+  function buildPreviewHTML() {
+    const p = window.XyloProjects.getActive();
+    if (!p) return null;
+    const files = Object.keys(p.files);
+
+    const htmlFile =
+      ['index.html', 'index.htm'].find(f => p.files[f]) ||
+      files.find(f => f.endsWith('.html') || f.endsWith('.htm'));
+
+    if (!htmlFile) return null;
+
+    let html = p.files[htmlFile];
+
+    // Inline <link rel="stylesheet" href="...">
+    html = html.replace(/<link[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, href) => {
+      if (p.files[href]) return '<style>\n' + p.files[href] + '\n</style>';
+      return match;
+    });
+
+    // Inline <script src="..."></script>
+    html = html.replace(/<script[^>]*src=["']([^"']+)["'][^>]*><\/script>/gi, (match, src) => {
+      if (p.files[src]) return '<script>\n' + p.files[src] + '\n<\/script>';
+      return match;
+    });
+
+    // Inject console interceptor so logs reach the XYLO console panel
+    const interceptor = '<script>\n' +
+      '(function(){\n' +
+      '  var _orig = { log: console.log, error: console.error, warn: console.warn, info: console.info };\n' +
+      '  function emit(type, args) {\n' +
+      '    try {\n' +
+      '      var text = Array.prototype.map.call(args, function(a) {\n' +
+      '        if (a === null) return "null";\n' +
+      '        if (a === undefined) return "undefined";\n' +
+      '        if (typeof a === "object") { try { return JSON.stringify(a); } catch(e) { return String(a); } }\n' +
+      '        return String(a);\n' +
+      '      }).join(" ");\n' +
+      '      parent.postMessage({ source: "xylo-preview", type: type, text: text }, "*");\n' +
+      '    } catch(e) {}\n' +
+      '  }\n' +
+      '  console.log = function(){ _orig.log.apply(console, arguments); emit("log", arguments); };\n' +
+      '  console.error = function(){ _orig.error.apply(console, arguments); emit("error", arguments); };\n' +
+      '  console.warn = function(){ _orig.warn.apply(console, arguments); emit("warn", arguments); };\n' +
+      '  console.info = function(){ _orig.info.apply(console, arguments); emit("info", arguments); };\n' +
+      '  window.addEventListener("error", function(e){\n' +
+      '    emit("error", [e.message + " (line " + e.lineno + ")"]);\n' +
+      '  });\n' +
+      '})();\n' +
+      '<\/script>';
+
+    html = html.replace(/<head>/i, '<head>' + interceptor);
+    return html;
+  }
+
+  function openPreview() {
+    const html = buildPreviewHTML();
+    if (!html) {
+      toast('No HTML file to preview', true);
+      return;
+    }
+    const rp = document.getElementById('right-panel');
+    const frame = document.getElementById('preview-frame');
+    if (!rp || !frame) return;
+    rp.classList.remove('hidden');
+    frame.srcdoc = html;
+    window.XyloEditor.refresh();
+    const consoleEl = document.getElementById('console');
+    if (consoleEl) consoleEl.classList.remove('hidden');
+  }
+
+  function togglePreview() {
+    const rp = document.getElementById('right-panel');
+    if (!rp) return;
+    if (rp.classList.contains('hidden')) {
+      openPreview();
+    } else {
+      rp.classList.add('hidden');
+      window.XyloEditor.refresh();
+    }
+  }
 
   /* ─── Actions ─────────────────────────────────────────── */
   function run() {
-    toast('Code execution lands in Phase 2');
+    const p = window.XyloProjects.getActive();
+    if (!p) { toast('Open a project first', true); return; }
+    const hasHtml = Object.keys(p.files).some(f => f.endsWith('.html') || f.endsWith('.htm'));
+    if (hasHtml) {
+      openPreview();
+      toast('Preview updated');
+    } else {
+      toast('Runnable code execution lands in Phase 2');
+    }
   }
 
   function runFile() {
-    toast('Code execution lands in Phase 2');
+    const active = window.XyloProjects.getActiveFile();
+    if (!active) { toast('Open a file first', true); return; }
+    const ext = window.XyloIcons.getExtension(active);
+    if (ext === 'html' || ext === 'htm') {
+      openPreview();
+      toast('Preview updated');
+    } else {
+      toast('Runnable code execution lands in Phase 2');
+    }
   }
 
   function saveActiveFile() {
@@ -379,23 +468,16 @@
     window.XyloEditor.refresh();
   }
 
-  function togglePreview() {
-    const rp = document.getElementById('right-panel');
-    if (!rp) return;
-    rp.classList.toggle('hidden');
-    window.XyloEditor.refresh();
-  }
-
   function promptGoToLine() {
     const f = window.XyloProjects.getActiveFile();
     if (!f) return;
     const total = window.XyloEditor.getLineCount();
-    const answer = window.prompt(`Go to line (1 – ${total}):`);
+    const answer = window.prompt('Go to line (1 – ' + total + '):');
     if (!answer) return;
     const n = parseInt(answer, 10);
     if (!isNaN(n)) window.XyloEditor.goToLine(n);
   }
-
+   
   function promptNewFile() {
     const p = window.XyloProjects.getActive();
     if (!p) { toast('Open a project first'); return; }
@@ -691,24 +773,38 @@
     updateStatus();
     updateCrumb();
     window.XyloIcons.refresh();
+
+       // Listen for console messages from the preview iframe
+    window.addEventListener('message', (e) => {
+      if (!e.data || e.data.source !== 'xylo-preview') return;
+      const body = document.getElementById('console-body');
+      if (!body) return;
+      const line = document.createElement('div');
+      line.className = 'console-line ' + (e.data.type === 'error' ? 'err' : e.data.type === 'warn' ? 'warn' : e.data.type === 'info' ? 'info' : 'log');
+      line.textContent = e.data.text;
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+    });
   }
+  
 
   /* ─── Public API ──────────────────────────────────────── */
-  window.XyloApp = {
-  boot,
-  toast,
-  openModal,
-  closeModal,
-  confirmModal,
-  run,
-  runFile,
-  saveActiveFile,
-  toggleSidebar,
-  toggleConsole,
-  togglePreview,
-  promptGoToLine,
-  promptNewFile,
-};
+   window.XyloApp = {
+    boot,
+    toast,
+    openModal,
+    closeModal,
+    confirmModal,
+    run,
+    runFile,
+    saveActiveFile,
+    toggleSidebar,
+    toggleConsole,
+    togglePreview,
+    openPreview,
+    promptGoToLine,
+    promptNewFile,
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
