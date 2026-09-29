@@ -399,9 +399,10 @@
   }
 
   /* ─── Wire chat input ─────────────────────────────────── */
-  function wireChat() {
+    function wireChat() {
     const input = document.getElementById('ai-input');
     const sendBtn = document.getElementById('ai-send');
+    const newChatBtn = document.getElementById('ai-new-chat');
     if (!input || !sendBtn) return;
 
     input.addEventListener('input', function () {
@@ -417,6 +418,7 @@
     });
 
     sendBtn.addEventListener('click', send);
+    if (newChatBtn) newChatBtn.addEventListener('click', newChat);
   }
 
   /* ─── Wire right panel tabs ───────────────────────────── */
@@ -452,8 +454,9 @@
   }
 
   /* ─── Init ────────────────────────────────────────────── */
-  function init() {
+    function init() {
     loadSettings();
+    loadChat();
     wireSetup();
     wireChat();
     wireTabs();
