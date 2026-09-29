@@ -421,19 +421,37 @@
     }
   }
 
+  function openPreviewInNewTab() {
+    const html = buildPreviewHTML();
+    if (!html) {
+      toast('No HTML file to preview', true);
+      return;
+    }
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) {
+      toast('Popup blocked — allow popups for this site', true);
+      URL.revokeObjectURL(url);
+      return;
+    }
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
+
   /* ─── Actions ─────────────────────────────────────────── */
-  function run() {
+    function run() {
     const p = window.XyloProjects.getActive();
     if (!p) { toast('Open a project first', true); return; }
     const hasHtml = Object.keys(p.files).some(f => f.endsWith('.html') || f.endsWith('.htm'));
     if (hasHtml) {
+      const rp = document.getElementById('right-panel');
+      if (rp && rp.classList.contains('hidden')) rp.classList.remove('hidden');
+      switchRightTab('preview');
       openPreview();
-      toast('Preview updated');
     } else {
       toast('Runnable code execution lands in Phase 2');
     }
   }
-
   function runFile() {
     const active = window.XyloProjects.getActiveFile();
     if (!active) { toast('Open a file first', true); return; }
@@ -692,15 +710,18 @@
     const consoleClose = document.getElementById('console-close');
     if (consoleClose) consoleClose.addEventListener('click', toggleConsole);
 
-    // Right panel
+        // Right panel
     const rightClose = document.getElementById('right-close');
     if (rightClose) rightClose.addEventListener('click', togglePreview);
+
     const rightRefresh = document.getElementById('right-refresh');
     if (rightRefresh) rightRefresh.addEventListener('click', () => {
-      const frame = document.getElementById('preview-frame');
-      if (frame && frame.src) frame.src = frame.src;
+      openPreview();
+      toast('Preview refreshed');
     });
 
+    const rightOpen = document.getElementById('right-open');
+    if (rightOpen) rightOpen.addEventListener('click', openPreviewInNewTab);
     // Find bar
     const findClose = document.getElementById('find-close');
     if (findClose) findClose.addEventListener('click', () => window.XyloShortcuts.closeFind());
@@ -803,7 +824,7 @@
   
 
   /* ─── Public API ──────────────────────────────────────── */
-   window.XyloApp = {
+     window.XyloApp = {
     boot,
     toast,
     openModal,
@@ -816,6 +837,9 @@
     toggleConsole,
     togglePreview,
     openPreview,
+    openPreviewInNewTab,
+    switchRightTab,
+    refreshProjectUI,
     promptGoToLine,
     promptNewFile,
   };
