@@ -521,8 +521,13 @@
     updateCrumb();
   }
 
-  function openFileByName(filename) {
-    openFile(filename);
+    function switchRightTab(name) {
+    document.querySelectorAll('.right-tab').forEach(function (t) {
+      t.classList.toggle('active', t.dataset.tab === name);
+    });
+    document.querySelectorAll('.right-pane').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.pane === name);
+    });
   }
 
   /* ─── Escape HTML ─────────────────────────────────────── */
