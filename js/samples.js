@@ -22,7 +22,7 @@
       id: 'snake',
       title: 'Neon Snake',
       desc: 'A playable Snake game. Starts slow, speeds up, saves your best score.',
-      icon: 'gamepad-2',
+      icon: '🎮',
       type: 'web',
       files: {
         'index.html': `<!DOCTYPE html>
@@ -364,7 +364,7 @@ requestAnimationFrame(loop);`
       id: 'todo',
       title: 'Neon Todo',
       desc: 'A todo app that remembers your tasks. Add, complete, filter.',
-      icon: 'check-square',
+      icon: '✅',
       type: 'web',
       files: {
         'index.html': `<!DOCTYPE html>
@@ -689,7 +689,7 @@ console.log('Neon Todo ready. ' + tasks.length + ' tasks loaded.');`
       id: 'calculator',
       title: 'Calculator',
       desc: 'A working calculator with keyboard support.',
-      icon: 'calculator',
+      icon: '🧮',
       type: 'web',
       files: {
         'index.html': `<!DOCTYPE html>
@@ -953,7 +953,7 @@ console.log('Calculator ready.');`
       id: 'portfolio',
       title: 'Portfolio Page',
       desc: 'A modern personal site. Customize it with your own info.',
-      icon: 'user',
+      icon: '👤',
       type: 'web',
       files: {
         'index.html': `<!DOCTYPE html>
