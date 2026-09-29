@@ -173,18 +173,47 @@
       el.appendChild(typing);
     }
 
-    el.scrollTop = el.scrollHeight;
+        el.scrollTop = el.scrollHeight;
+    attachCodeBlockHandlers();
     window.XyloIcons.refresh();
   }
+
+   /* ─── Pending code blocks (used by apply buttons) ─────── */
+  let pendingCodeBlocks = [];
 
   /* ─── Simple markdown renderer ────────────────────────── */
   function renderMarkdown(text) {
     if (!text) return '';
     let html = escapeHtml(text);
+    pendingCodeBlocks = [];
 
-    // Fenced code blocks: ```lang\ncode```
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (_, lang, code) {
-      return '<pre><code>' + code.trim() + '</code></pre>';
+    // Fenced code blocks: ```header\ncode```
+    html = html.replace(/```([\w:./\- ]*)\n([\s\S]*?)```/g, function (_, header, code) {
+      const trimmed = code.trim();
+      let filename = null;
+      let lang = header || 'text';
+
+      if (header.indexOf('filename:') === 0) {
+        const parts = header.substring(9).trim().split(/\s+/);
+        filename = parts[0];
+        lang = parts[1] || 'code';
+      }
+
+      const id = 'cb_' + Math.random().toString(36).slice(2, 10);
+      pendingCodeBlocks.push({ id: id, filename: filename, lang: lang, code: trimmed });
+
+      const label = filename ? filename : lang;
+
+      return '<div class="ai-code-block">' +
+        '<div class="ai-code-head">' +
+          '<span class="ai-code-lang">' + escapeHtml(label) + '</span>' +
+          '<div class="ai-code-actions">' +
+            (filename ? '<button class="ai-code-btn" data-act="apply" data-block="' + id + '">Apply</button>' : '') +
+            '<button class="ai-code-btn" data-act="copy" data-block="' + id + '">Copy</button>' +
+          '</div>' +
+        '</div>' +
+        '<pre><code>' + trimmed + '</code></pre>' +
+      '</div>';
     });
 
     // Inline code
@@ -198,17 +227,76 @@
 
     // Paragraphs
     const blocks = html.split(/\n\n+/);
-    return blocks.map(b => {
-      if (b.startsWith('<pre>')) return b;
+    return blocks.map(function (b) {
+      if (b.indexOf('<div class="ai-code-block"') === 0) return b;
       return '<p>' + b.replace(/\n/g, '<br>') + '</p>';
     }).join('');
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+  /* ─── Attach click handlers after render ──────────────── */
+  function attachCodeBlockHandlers() {
+    document.querySelectorAll('.ai-code-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const blockId = btn.dataset.block;
+        const block = pendingCodeBlocks.find(function (b) { return b.id === blockId; });
+        if (!block) return;
+
+        if (btn.dataset.act === 'copy') {
+          navigator.clipboard.writeText(block.code).then(function () {
+            const original = btn.textContent;
+            btn.textContent = 'Copied';
+            setTimeout(function () { btn.textContent = original; }, 1400);
+          }).catch(function () {
+            window.XyloApp.toast('Copy failed', true);
+          });
+          return;
+        }
+
+        if (btn.dataset.act === 'apply' && block.filename) {
+          applyCodeToFile(block.filename, block.code);
+        }
+      });
+    });
+  }
+
+  /* ─── Write code into the project ─────────────────────── */
+  function applyCodeToFile(filename, code) {
+    const project = window.XyloProjects.getActive();
+    if (!project) {
+      window.XyloApp.toast('Open a project first', true);
+      return;
+    }
+
+    const exists = project.files[filename] !== undefined;
+
+    if (exists) {
+      if (!confirm('Overwrite ' + filename + '? This cannot be undone.')) return;
+    }
+
+    project.files[filename] = code;
+    window.XyloProjects.persist();
+
+    // Refresh sidebar + tabs
+    if (window.XyloApp.refreshProjectUI) window.XyloApp.refreshProjectUI();
+
+    // If we just changed the file the user is editing, reload it
+    if (window.XyloProjects.getActiveFile() === filename) {
+      window.XyloEditor.loadFile(filename, code);
+    } else if (!exists) {
+      // New file — open it so the user sees it
+      const app = window.XyloApp;
+      if (app && app.openFile) app.openFile(filename);
+    }
+
+    // Refresh preview if it's a web file
+    const ext = window.XyloIcons.getExtension(filename);
+    if (['html', 'htm', 'css', 'js'].indexOf(ext) !== -1) {
+      setTimeout(function () {
+        if (window.XyloApp.openPreview) window.XyloApp.openPreview();
+      }, 100);
+    }
+
+    window.XyloApp.toast(exists ? 'Updated ' + filename : 'Created ' + filename);
   }
 
   /* ─── Send message ────────────────────────────────────── */
