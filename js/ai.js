@@ -39,6 +39,7 @@
 
   let messages = [];   // [{role, content}]
   let busy = false;
+  let currentAbort = null;
 
   /* ─── Storage ─────────────────────────────────────────── */
   function loadSettings() {
@@ -124,7 +125,7 @@
   }
 
   /* ─── API call ────────────────────────────────────────── */
-  async function callAPI() {
+    async function callAPI(signal) {
     const provider = PROVIDERS[settings.provider];
     if (!provider) throw new Error('Unknown provider');
 
@@ -145,6 +146,7 @@
       method: 'POST',
       headers: provider.headers(settings.apiKey),
       body: JSON.stringify(body),
+      signal: signal,
     });
 
     if (!res.ok) {
@@ -331,7 +333,7 @@
   }
 
   /* ─── Send message ────────────────────────────────────── */
-  async function send() {
+    async function send() {
     const input = document.getElementById('ai-input');
     if (!input || busy) return;
     const text = input.value.trim();
@@ -343,21 +345,50 @@
     persistChat();
     busy = true;
     renderMessages();
-    
+    updateSendButton();
 
-        try {
-      const reply = await callAPI();
+    currentAbort = new AbortController();
+
+    try {
+      const reply = await callAPI(currentAbort.signal);
       messages.push({ role: 'assistant', content: reply });
     } catch (err) {
-      messages.push({
-        role: 'assistant',
-        content: '⚠️ **Error:** ' + (err.message || 'Something went wrong.'),
-      });
+      if (err.name === 'AbortError') {
+        messages.push({ role: 'assistant', content: '_Stopped._' });
+      } else {
+        messages.push({
+          role: 'assistant',
+          content: '⚠️ **Error:** ' + (err.message || 'Something went wrong.'),
+        });
+      }
     }
 
-   busy = false;
+    currentAbort = null;
+    busy = false;
     persistChat();
     renderMessages();
+    updateSendButton();
+  }
+
+  function stopGeneration() {
+    if (currentAbort) {
+      currentAbort.abort();
+    }
+  }
+
+  function updateSendButton() {
+    const btn = document.getElementById('ai-send');
+    if (!btn) return;
+    if (busy) {
+      btn.innerHTML = '<i data-lucide="square"></i>';
+      btn.title = 'Stop';
+      btn.dataset.mode = 'stop';
+    } else {
+      btn.innerHTML = '<i data-lucide="arrow-up"></i>';
+      btn.title = 'Send (Enter)';
+      btn.dataset.mode = 'send';
+    }
+    window.XyloIcons.refresh();
   }
    
   /* ─── Setup form ──────────────────────────────────────── */
@@ -404,7 +435,7 @@
   }
 
   /* ─── Wire chat input ─────────────────────────────────── */
-    function wireChat() {
+      function wireChat() {
     const input = document.getElementById('ai-input');
     const sendBtn = document.getElementById('ai-send');
     const newChatBtn = document.getElementById('ai-new-chat');
@@ -422,7 +453,14 @@
       }
     });
 
-    sendBtn.addEventListener('click', send);
+    sendBtn.addEventListener('click', function () {
+      if (sendBtn.dataset.mode === 'stop') {
+        stopGeneration();
+      } else {
+        send();
+      }
+    });
+
     if (newChatBtn) newChatBtn.addEventListener('click', newChat);
   }
 
@@ -459,19 +497,20 @@
   }
 
   /* ─── Init ────────────────────────────────────────────── */
-    function init() {
+      function init() {
     loadSettings();
     loadChat();
     wireSetup();
     wireChat();
     wireTabs();
+    updateSendButton();
     window.XyloIcons.refresh();
   }
-
-    window.XyloAI = {
+      window.XyloAI = {
     init,
     openAITab,
     send,
+    stop: stopGeneration,
     newChat,
   };
 })();
