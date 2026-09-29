@@ -341,7 +341,7 @@
     busy = true;
     renderMessages();
 
-    try {
+        try {
       const reply = await callAPI();
       messages.push({ role: 'assistant', content: reply });
     } catch (err) {
@@ -352,8 +352,8 @@
     }
 
     busy = false;
+    persistChat();
     renderMessages();
-  }
 
   /* ─── Setup form ──────────────────────────────────────── */
   function showSetup(show) {
@@ -445,7 +445,8 @@
   }
 
   /* ─── Show the AI tab from outside ────────────────────── */
-  function openAITab() {
+   function openAITab() {
+    loadChat();
     const aiTab = document.querySelector('.right-tab[data-tab="ai"]');
     if (aiTab) aiTab.click();
   }
