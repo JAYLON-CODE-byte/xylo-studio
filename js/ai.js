@@ -69,12 +69,14 @@
     return 'xylo.ai.chat.' + id;
   }
 
-  function loadChat() {
+    function loadChat() {
     try {
       const raw = localStorage.getItem(chatKey());
-      messages = raw ? JSON.parse(raw) : [];
+      const loaded = raw ? JSON.parse(raw) : [];
+      messages.length = 0;
+      loaded.forEach(function (m) { messages.push(m); });
     } catch (e) {
-      messages = [];
+      messages.length = 0;
     }
   }
 
