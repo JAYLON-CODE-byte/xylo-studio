@@ -1640,3 +1640,10 @@ a:hover { color: var(--cyan); }
   background: rgba(0, 212, 255, 0.08);
 }
 .ai-new-chat [data-lucide] { width: 11px; height: 11px; }
+.ai-send[data-mode="stop"] {
+  background: var(--err);
+  color: #fff;
+}
+.ai-send[data-mode="stop"]:hover {
+  background: #ff6080;
+}
