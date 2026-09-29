@@ -63,6 +63,35 @@
     return !!settings.apiKey;
   }
 
+  /* ─── Chat history per project ────────────────────────── */
+  function chatKey() {
+    const id = window.XyloProjects.getActiveId() || 'global';
+    return 'xylo.ai.chat.' + id;
+  }
+
+  function loadChat() {
+    try {
+      const raw = localStorage.getItem(chatKey());
+      messages = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      messages = [];
+    }
+  }
+
+  function persistChat() {
+    try {
+      const trimmed = messages.slice(-40);
+      localStorage.setItem(chatKey(), JSON.stringify(trimmed));
+    } catch (e) {}
+  }
+
+  function newChat() {
+    if (messages.length > 0 && !confirm('Start a new chat? This clears the current conversation.')) return;
+    messages = [];
+    persistChat();
+    renderMessages();
+  }
+
   /* ─── System prompt ───────────────────────────────────── */
   function buildSystemPrompt() {
     const project = window.XyloProjects.getActive();
