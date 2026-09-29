@@ -1600,3 +1600,43 @@ a:hover { color: var(--cyan); }
   color: var(--ink-1);
   background: var(--bg);
 }
+.ai-chat-bar {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ai-chat-label {
+  font-family: var(--font-disp);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ai-new-chat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  font-family: var(--font-disp);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--fast);
+}
+.ai-new-chat:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: rgba(0, 212, 255, 0.08);
+}
+.ai-new-chat [data-lucide] { width: 11px; height: 11px; }
