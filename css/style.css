@@ -103,6 +103,19 @@ a:hover { color: var(--cyan); }
 .act-item [data-lucide],
 .tb-btn [data-lucide] { width: 16px; height: 16px; }
 .icon-btn [data-lucide] { stroke-width: 1.8; }
+.right-tabs .icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  transition: all var(--fast) var(--ease);
+}
+.right-tabs .icon-btn:hover {
+  color: var(--blue);
+  background: rgba(0, 212, 255, 0.08);
+  border-color: rgba(0, 212, 255, 0.25);
+}
+.right-tabs .icon-btn [data-lucide] { width: 14px; height: 14px; stroke-width: 2; }
 
 /* ═══════════════════════════════════════════════════════════
    TOAST
