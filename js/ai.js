@@ -338,8 +338,10 @@
     input.value = '';
     input.style.height = 'auto';
     messages.push({ role: 'user', content: text });
+    persistChat();
     busy = true;
     renderMessages();
+    
 
         try {
       const reply = await callAPI();
@@ -351,10 +353,11 @@
       });
     }
 
-    busy = false;
+   busy = false;
     persistChat();
     renderMessages();
-
+  }
+   
   /* ─── Setup form ──────────────────────────────────────── */
   function showSetup(show) {
     const setup = document.getElementById('ai-setup');
@@ -463,9 +466,10 @@
     window.XyloIcons.refresh();
   }
 
-  window.XyloAI = {
+    window.XyloAI = {
     init,
     openAITab,
     send,
+    newChat,
   };
 })();
