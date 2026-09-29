@@ -1546,3 +1546,57 @@ a:hover { color: var(--cyan); }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── AI code blocks ────────────────────────────────────── */
+.ai-code-block {
+  margin: 10px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.ai-code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+}
+.ai-code-lang {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ai-code-actions { display: flex; gap: 4px; }
+.ai-code-btn {
+  font-family: var(--font-disp);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all var(--fast);
+}
+.ai-code-btn:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: rgba(0, 212, 255, 0.08);
+}
+.ai-code-block pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-1);
+  background: var(--bg);
+}
