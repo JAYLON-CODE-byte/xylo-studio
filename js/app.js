@@ -512,6 +512,18 @@
       toast('File already exists', true);
     }
   }
+   
+  /* ─── UI refresh helpers ──────────────────────────────── */
+    function refreshProjectUI() {
+    renderFiles();
+    renderTabs();
+    updateStatus();
+    updateCrumb();
+  }
+
+  function openFileByName(filename) {
+    openFile(filename);
+  }
 
   /* ─── Escape HTML ─────────────────────────────────────── */
   function escapeHtml(str) {
@@ -824,7 +836,7 @@
   
 
   /* ─── Public API ──────────────────────────────────────── */
-     window.XyloApp = {
+      window.XyloApp = {
     boot,
     toast,
     openModal,
