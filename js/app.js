@@ -235,7 +235,7 @@
           <div class="sample-item-desc">${s.desc}</div>`;
       } else {
         card.innerHTML = `
-          <div class="sample-card-icon"><i data-lucide="${s.icon}"></i></div>
+          <div class="sample-card-icon"><span class="sample-emoji">${s.icon}</span></div>
           <div class="sample-card-title">${s.title}</div>
           <div class="sample-card-desc">${s.desc}</div>`;
       }
