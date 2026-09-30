@@ -215,6 +215,13 @@
   let pendingCodeBlocks = [];
 
   /* ─── Simple markdown renderer ────────────────────────── */
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+   
   function renderMarkdown(text) {
     if (!text) return '';
     let html = escapeHtml(text);
