@@ -40,6 +40,8 @@
   let messages = [];   // [{role, content}]
   let busy = false;
   let currentAbort = null;
+  let thinkingStart = 0;
+  let thinkingTimer = null;
 
   /* ─── Storage ─────────────────────────────────────────── */
   function loadSettings() {
@@ -198,12 +200,19 @@
     }
 
     if (busy) {
-      const typing = document.createElement('div');
-      typing.className = 'ai-msg assistant';
-      typing.innerHTML =
+      const elapsed = Math.floor((Date.now() - thinkingStart) / 1000);
+      const thinking = document.createElement('div');
+      thinking.className = 'ai-msg assistant';
+      thinking.innerHTML =
         '<div class="ai-msg-meta">XYLO AI</div>' +
-        '<div class="ai-msg-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
-      el.appendChild(typing);
+        '<div class="ai-thinking-bubble">' +
+          '<div class="ai-thinking-head">' +
+            '<span class="ai-thinking-icon">✦</span>' +
+            '<span class="ai-thinking-time">Thinking for ' + elapsed + 's</span>' +
+          '</div>' +
+          '<div class="ai-thinking-dots"><span></span><span></span><span></span></div>' +
+        '</div>';
+      el.appendChild(thinking);
     }
 
         el.scrollTop = el.scrollHeight;
@@ -340,7 +349,7 @@
   }
 
   /* ─── Send message ────────────────────────────────────── */
-    async function send() {
+      async function send() {
     const input = document.getElementById('ai-input');
     if (!input || busy) return;
     const text = input.value.trim();
@@ -351,10 +360,21 @@
     messages.push({ role: 'user', content: text });
     persistChat();
     busy = true;
+    thinkingStart = Date.now();
     renderMessages();
     updateSendButton();
 
     currentAbort = new AbortController();
+
+    // Start the thinking timer
+    if (thinkingTimer) clearInterval(thinkingTimer);
+    thinkingTimer = setInterval(() => {
+      const el = document.querySelector('.ai-thinking-time');
+      if (el) {
+        const secs = Math.floor((Date.now() - thinkingStart) / 1000);
+        el.textContent = 'Thinking for ' + secs + 's';
+      }
+    }, 1000);
 
     try {
       const reply = await callAPI(currentAbort.signal);
@@ -370,6 +390,7 @@
       }
     }
 
+    if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = null; }
     currentAbort = null;
     busy = false;
     persistChat();
