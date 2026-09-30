@@ -1647,3 +1647,7 @@ a:hover { color: var(--cyan); }
 .ai-send[data-mode="stop"]:hover {
   background: #ff6080;
 }
+.sample-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
