@@ -19,7 +19,7 @@
   const PROVIDERS = {
     pollinations: {
       url: 'https://text.pollinations.ai/openai',
-      model: 'openai',
+      model: 'openai-fast',
       headers: () => ({ 'Content-Type': 'application/json' }),
     },
     deepseek: {
