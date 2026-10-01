@@ -646,6 +646,16 @@ a:hover { color: var(--cyan); }
   font-size: 15px;
   flex-shrink: 0;
 }
+.proj-icon [data-lucide] {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+  color: var(--blue);
+}
+.proj-emoji {
+  font-size: 15px;
+  line-height: 1;
+}
 .proj-info {
   flex: 1;
   min-width: 0;
@@ -858,6 +868,12 @@ a:hover { color: var(--cyan); }
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
+}
+.sample-card-icon [data-lucide] {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+  color: var(--blue);
 }
 .sample-card-desc {
   font-size: 12px;
@@ -1646,10 +1662,6 @@ a:hover { color: var(--cyan); }
 }
 .ai-send[data-mode="stop"]:hover {
   background: #ff6080;
-}
-.sample-emoji {
-  font-size: 20px;
-  line-height: 1;
 }
 .ai-thinking-bubble {
   display: inline-flex;
