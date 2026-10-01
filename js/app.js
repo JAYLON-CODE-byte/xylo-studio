@@ -17,6 +17,17 @@
   ];
 
   let selectedIcon = '⚡';
+   
+  /* ─── Icon renderer ──────────────────────────────────── */
+  function renderIconHTML(icon) {
+    if (!icon) return '⚡';
+    // Lucide names are kebab-case: 'gamepad-2', 'check-square'
+    if (/^[a-z][a-z0-9-]*$/.test(icon)) {
+      return '<i data-lucide="' + icon + '"></i>';
+    }
+    // Otherwise it's an emoji
+    return '<span class="proj-emoji">' + icon + '</span>';
+  }
 
   /* ─── Toast ───────────────────────────────────────────── */
   let toastTimer = null;
@@ -102,7 +113,7 @@
       const item = document.createElement('div');
       item.className = 'proj-item' + (p.id === window.XyloProjects.getActiveId() ? ' active' : '');
       item.innerHTML = `
-        <div class="proj-icon">${p.icon || '⚡'}</div>
+        <div class="proj-icon">${renderIconHTML(p.icon)}</div>
         <div class="proj-info">
           <div class="proj-name">${escapeHtml(p.name)}</div>
           <div class="proj-meta">${Object.keys(p.files).length} file${Object.keys(p.files).length === 1 ? '' : 's'}</div>
@@ -235,7 +246,7 @@
           <div class="sample-item-desc">${s.desc}</div>`;
       } else {
         card.innerHTML = `
-          <div class="sample-card-icon"><span class="sample-emoji">${s.icon}</span></div>
+          <div class="sample-card-icon">${renderIconHTML(s.icon)}</div>
           <div class="sample-card-title">${s.title}</div>
           <div class="sample-card-desc">${s.desc}</div>`;
       }
@@ -337,7 +348,11 @@
     const p = window.XyloProjects.getActive();
     const f = window.XyloProjects.getActiveFile();
     if (!p) { crumb.textContent = ''; return; }
-    crumb.textContent = `${p.icon || ''} ${p.name}${f ? ' › ' + f : ''}`.trim();
+    const iconHTML = renderIconHTML(p.icon);
+    const cleanIcon = /^[a-z][a-z0-9-]*$/.test(p.icon) ? '' : (p.icon || '');
+    crumb.innerHTML = cleanIcon + ' ' + escapeHtml(p.name) + (f ? ' › ' + escapeHtml(f) : '');
+    // Re-render Lucide icons in the crumb
+    window.XyloIcons.refresh();
   }
   /* ─── Preview ─────────────────────────────────────────── */
   function buildPreviewHTML() {
