@@ -1734,3 +1734,10 @@ a:hover { color: var(--cyan); }
   width: 13px;
   height: 13px;
 }
+.setting-hint {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.5;
+  margin-top: -6px;
+  margin-bottom: 8px;
+}
