@@ -440,11 +440,16 @@
 
                <div class="ai-chat hidden" id="ai-chat">
           <div class="ai-chat-bar">
-            <span class="ai-chat-label">Chat</span>
+          <span class="ai-chat-label">Chat</span>
+          <div class="ai-chat-actions">
+            <button class="ai-icon-toggle" id="ai-voice-toggle" title="Voice: On">
+              <i data-lucide="volume-2"></i>
+            </button>
             <button class="ai-new-chat" id="ai-new-chat" title="Start new chat">
               <i data-lucide="plus"></i><span>New</span>
             </button>
           </div>
+        </div>
           <div class="ai-messages" id="ai-messages"></div>
           <div class="ai-input-row">
             <textarea id="ai-input" placeholder="Ask anything about your code…" rows="1"></textarea>
