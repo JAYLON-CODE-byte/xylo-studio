@@ -860,24 +860,18 @@
   
 
   /* ─── Public API ──────────────────────────────────────── */
-      window.XyloApp = {
-    boot,
-    toast,
-    openModal,
-    closeModal,
-    confirmModal,
-    run,
-    runFile,
-    saveActiveFile,
-    toggleSidebar,
-    toggleConsole,
-    togglePreview,
-    openPreview,
-    openPreviewInNewTab,
-    switchRightTab,
-    refreshProjectUI,
-    promptGoToLine,
-    promptNewFile,
+        window.XyloAI = {
+    init,
+    openAITab,
+    send,
+    stop: stopGeneration,
+    newChat,
+    speak,
+    stopSpeaking,
+    toggleVoice,
+    getVoiceList,
+    setVoice,
+    populateVoicePicker,
   };
 
   if (document.readyState === 'loading') {
