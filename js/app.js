@@ -638,6 +638,10 @@
       't-linewrap': 'lineWrapping',
       't-activeline': 'styleActiveLine',
       't-autoclose': 'autoCloseBrackets',
+    // AI voice picker
+    if (window.XyloAI && window.XyloAI.populateVoicePicker) {
+      window.XyloAI.populateVoicePicker();
+    }
     };
     Object.keys(toggleMap).forEach(id => {
       const btn = document.getElementById(id);
