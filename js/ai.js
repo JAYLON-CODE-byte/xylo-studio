@@ -534,7 +534,7 @@
   let voiceEnabled = true;
   let currentUtterance = null;
 
-  function speak(text) {
+    function speak(text) {
     if (!voiceEnabled) return;
     if (!('speechSynthesis' in window)) return;
 
@@ -555,49 +555,124 @@
     const trimmed = clean.length > 500 ? clean.slice(0, 500) + '...' : clean;
 
     const utter = new SpeechSynthesisUtterance(trimmed);
-    utter.rate = 1.05;
+    utter.rate = 1.0;
     utter.pitch = 1.0;
     utter.volume = 1.0;
 
     const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(function (v) { return /en-(US|GB)/.test(v.lang); })
-      || voices.find(function (v) { return /^en/i.test(v.lang); });
-    if (preferred) utter.voice = preferred;
+
+    // Try the user's saved voice first
+    let chosen = null;
+    try {
+      const savedName = localStorage.getItem('xylo.ai.voiceName');
+      if (savedName) {
+        chosen = voices.find(function (v) { return v.name === savedName; });
+      }
+    } catch (e) {}
+
+    // If no saved voice, auto-pick the best available
+    if (!chosen) {
+      chosen = pickBestVoice(voices);
+    }
+
+    if (chosen) {
+      utter.voice = chosen;
+      utter.lang = chosen.lang;
+    }
 
     currentUtterance = utter;
     window.speechSynthesis.speak(utter);
   }
 
-  function stopSpeaking() {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+  /* Pick the best-sounding English voice available */
+  function pickBestVoice(voices) {
+    if (!voices || !voices.length) return null;
+
+    const english = voices.filter(function (v) {
+      return /^en/i.test(v.lang);
+    });
+
+    if (!english.length) return voices[0];
+
+    // Priority list — neural/natural voices first, then standard, then any English
+    const priorityPatterns = [
+      /Aria|Jenny|Guy|Davis|Ryan|Sonia|Natasha/i,        // Windows 11 neural
+      /Natural|Neural|Online/i,                           // Explicit neural tags
+      /Google US English|Google UK English/i,             // Chrome built-in
+      /Samantha|Daniel|Karen|Moira|Tessa/i,               // macOS voices
+      /Microsoft (David|Zira|Mark)/i,                     // Windows 10 older
+    ];
+
+    for (let i = 0; i < priorityPatterns.length; i++) {
+      const match = english.find(function (v) {
+        return priorityPatterns[i].test(v.name);
+      });
+      if (match) return match;
     }
-    currentUtterance = null;
+
+    // Fallback: first US English
+    const usEnglish = english.find(function (v) { return /en-US/i.test(v.lang); });
+    return usEnglish || english[0];
   }
 
-  function toggleVoice() {
-    voiceEnabled = !voiceEnabled;
-    if (!voiceEnabled) stopSpeaking();
-    updateVoiceButton();
-    try { localStorage.setItem('xylo.ai.voice', voiceEnabled ? '1' : '0'); } catch (e) {}
+  /* List all available English voices (used by Settings) */
+  function getVoiceList() {
+    if (!('speechSynthesis' in window)) return [];
+    return window.speechSynthesis.getVoices().filter(function (v) {
+      return /^en/i.test(v.lang);
+    });
   }
 
-  function updateVoiceButton() {
-    const btn = document.getElementById('ai-voice-toggle');
-    if (!btn) return;
-    btn.classList.toggle('on', voiceEnabled);
-    btn.title = voiceEnabled ? 'Voice: On' : 'Voice: Off';
-    btn.innerHTML = voiceEnabled
-      ? '<i data-lucide="volume-2"></i>'
-      : '<i data-lucide="volume-x"></i>';
-    window.XyloIcons.refresh();
-  }
-
-  function loadVoicePref() {
+  /* Save chosen voice from Settings */
+  function setVoice(name) {
     try {
-      const v = localStorage.getItem('xylo.ai.voice');
-      if (v !== null) voiceEnabled = v === '1';
+      localStorage.setItem('xylo.ai.voiceName', name);
     } catch (e) {}
+    // Preview it
+    const test = new SpeechSynthesisUtterance('Voice selected.');
+    const voices = window.speechSynthesis.getVoices();
+    const found = voices.find(function (v) { return v.name === name; });
+    if (found) test.voice = found;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(test);
+  }
+
+  /* Expose to the settings UI */
+  function populateVoicePicker() {
+    const select = document.getElementById('s-ai-voice');
+    if (!select) return;
+
+    function fill() {
+      const voices = getVoiceList();
+      if (!voices.length) return;
+
+      const savedName = (function () {
+        try { return localStorage.getItem('xylo.ai.voiceName') || ''; } catch (e) { return ''; }
+      })();
+
+      select.innerHTML = '<option value="">Auto (recommended)</option>';
+      voices.forEach(function (v) {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = v.name + ' · ' + v.lang;
+        if (v.name === savedName) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    fill();
+    // Voices load async on Chrome — refill once they arrive
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = fill;
+    }
+
+    select.addEventListener('change', function () {
+      if (!select.value) {
+        try { localStorage.removeItem('xylo.ai.voiceName'); } catch (e) {}
+        return;
+      }
+      setVoice(select.value);
+    });
   }
    
   /* ─── Init ────────────────────────────────────────────── */
