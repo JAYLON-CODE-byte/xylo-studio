@@ -530,7 +530,7 @@
     if (aiTab) aiTab.click();
   }
 
-  /* ─── Voice output ────────────────────────────────────── */
+    /* ─── Voice output ────────────────────────────────────── */
   let voiceEnabled = true;
   let currentUtterance = null;
 
