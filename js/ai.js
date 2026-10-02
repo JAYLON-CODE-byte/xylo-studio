@@ -380,6 +380,7 @@
     try {
       const reply = await callAPI(currentAbort.signal);
       messages.push({ role: 'assistant', content: reply });
+      speak(reply);
     } catch (err) {
       if (err.name === 'AbortError') {
         messages.push({ role: 'assistant', content: '_Stopped._' });
@@ -529,6 +530,76 @@
     if (aiTab) aiTab.click();
   }
 
+  /* ─── Voice output ────────────────────────────────────── */
+  let voiceEnabled = true;
+  let currentUtterance = null;
+
+  function speak(text) {
+    if (!voiceEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const clean = text
+      .replace(/```[\s\S]*?```/g, ' code block ')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/[⚠️✦•]/g, '')
+      .replace(/[#_>]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!clean) return;
+
+    const trimmed = clean.length > 500 ? clean.slice(0, 500) + '...' : clean;
+
+    const utter = new SpeechSynthesisUtterance(trimmed);
+    utter.rate = 1.05;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(function (v) { return /en-(US|GB)/.test(v.lang); })
+      || voices.find(function (v) { return /^en/i.test(v.lang); });
+    if (preferred) utter.voice = preferred;
+
+    currentUtterance = utter;
+    window.speechSynthesis.speak(utter);
+  }
+
+  function stopSpeaking() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    currentUtterance = null;
+  }
+
+  function toggleVoice() {
+    voiceEnabled = !voiceEnabled;
+    if (!voiceEnabled) stopSpeaking();
+    updateVoiceButton();
+    try { localStorage.setItem('xylo.ai.voice', voiceEnabled ? '1' : '0'); } catch (e) {}
+  }
+
+  function updateVoiceButton() {
+    const btn = document.getElementById('ai-voice-toggle');
+    if (!btn) return;
+    btn.classList.toggle('on', voiceEnabled);
+    btn.title = voiceEnabled ? 'Voice: On' : 'Voice: Off';
+    btn.innerHTML = voiceEnabled
+      ? '<i data-lucide="volume-2"></i>'
+      : '<i data-lucide="volume-x"></i>';
+    window.XyloIcons.refresh();
+  }
+
+  function loadVoicePref() {
+    try {
+      const v = localStorage.getItem('xylo.ai.voice');
+      if (v !== null) voiceEnabled = v === '1';
+    } catch (e) {}
+  }
+   
   /* ─── Init ────────────────────────────────────────────── */
       function init() {
     loadSettings();
