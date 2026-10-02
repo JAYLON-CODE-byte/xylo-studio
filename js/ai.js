@@ -92,6 +92,7 @@
 
   function newChat() {
     if (messages.length > 0 && !confirm('Start a new chat? This clears the current conversation.')) return;
+    stopSpeaking();
     messages = [];
     persistChat();
     renderMessages();
@@ -402,6 +403,7 @@
     if (currentAbort) {
       currentAbort.abort();
     }
+    stopSpeaking();
   }
 
   function updateSendButton() {
@@ -489,6 +491,9 @@
       }
     });
 
+    const voiceBtn = document.getElementById('ai-voice-toggle');
+    if (voiceBtn) voiceBtn.addEventListener('click', toggleVoice);
+
     if (newChatBtn) newChatBtn.addEventListener('click', newChat);
   }
 
@@ -528,10 +533,12 @@
       function init() {
     loadSettings();
     loadChat();
+    loadVoicePref();
     wireSetup();
     wireChat();
     wireTabs();
     updateSendButton();
+    updateVoiceButton();
     window.XyloIcons.refresh();
   }
       window.XyloAI = {
@@ -540,5 +547,8 @@
     send,
     stop: stopGeneration,
     newChat,
+    speak,
+    stopSpeaking,
+    toggleVoice,
   };
 })();
