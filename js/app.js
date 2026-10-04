@@ -633,16 +633,17 @@
       persist();
     });
 
-    const toggleMap = {
+        const toggleMap = {
       't-linenumbers': 'lineNumbers',
       't-linewrap': 'lineWrapping',
       't-activeline': 'styleActiveLine',
       't-autoclose': 'autoCloseBrackets',
+    };
+
     // AI voice picker
     if (window.XyloAI && window.XyloAI.populateVoicePicker) {
       window.XyloAI.populateVoicePicker();
     }
-    };
     Object.keys(toggleMap).forEach(id => {
       const btn = document.getElementById(id);
       if (!btn) return;
@@ -860,18 +861,25 @@
   
 
   /* ─── Public API ──────────────────────────────────────── */
-        window.XyloAI = {
-    init,
-    openAITab,
-    send,
-    stop: stopGeneration,
-    newChat,
-    speak,
-    stopSpeaking,
-    toggleVoice,
-    getVoiceList,
-    setVoice,
-    populateVoicePicker,
+          window.XyloApp = {
+    boot,
+    toast,
+    openModal,
+    closeModal,
+    confirmModal,
+    run,
+    runFile,
+    saveActiveFile,
+    toggleSidebar,
+    toggleConsole,
+    togglePreview,
+    openPreview,
+    openPreviewInNewTab,
+    switchRightTab,
+    refreshProjectUI,
+    promptGoToLine,
+    promptNewFile,
+    openFile,
   };
 
   if (document.readyState === 'loading') {
