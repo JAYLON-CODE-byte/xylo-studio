@@ -111,7 +111,7 @@
     list.innerHTML = '';
     all.forEach(p => {
       const item = document.createElement('div');
-      item.className = 'proj-item' + (p.id === window.XyloProjects.getActiveId() ? ' active' : '');
+      item.className = 'proj-item' + (p.id === window.XyloProjects.getActiveId() ? ' active' : ''); 
       item.innerHTML = `
         <div class="proj-icon">${renderIconHTML(p.icon)}</div>
         <div class="proj-info">
